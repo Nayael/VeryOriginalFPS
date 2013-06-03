@@ -1,13 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Unit : MonoBehaviour
 {
-
-    #region Private Members
-    
-    #endregion
-
     #region Public Members
     public float speed;
     public float jumpSpeed;
@@ -20,12 +16,12 @@ public class Unit : MonoBehaviour
         networkView.observed = this;
     }
 
-    // Use this for initialization
 	void OnNetworkInstantiate(NetworkMessageInfo info) {
         if (!networkView.isMine) {
             enabled = false;
             return;
         }
+
         FPSController fpsController = gameObject.AddComponent<FPSController>();
         fpsController.speed = speed;
         fpsController.jumpSpeed = jumpSpeed;
@@ -40,19 +36,24 @@ public class Unit : MonoBehaviour
 
     #region Networking
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-        //Vector3 moveDirection = Vector3.zero;
+        float health = 0f;
+        Vector3 moveDirection = Vector3.zero;
 
-        //// Sending
-        //if (stream.isWriting) {
-        //    moveDirection = GetComponent<FPSController>().MoveDirection * Time.deltaTime;
-        //    stream.Serialize(ref moveDirection);
-        //    Debug.Log("Sender " + moveDirection);
+        // Sending
+        if (stream.isWriting) {
+            health++;
+            moveDirection = GetComponent<FPSController>().MoveDirection * Time.deltaTime;
+            //stream.Serialize(ref moveDirection);
+            stream.Serialize(ref health);
+            //Debug.Log("Sender " + osef);
 
-        //// Receiveing
-        //} else {
-        //    stream.Serialize(ref moveDirection);
-        //    Debug.Log("Receiver " + moveDirection);
-        //}
+        // Receiveing
+        } else {
+            //stream.Serialize(ref moveDirection);
+            stream.Serialize(ref health);
+            //GetComponent<FPSController>().MoveDirection = moveDirection;
+            Debug.Log("Receiver " + health);
+        }
     }
     #endregion
 
