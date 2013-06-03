@@ -35,7 +35,7 @@ public class FPSController : MonoBehaviour
 
     #region Update
     void FixedUpdate () {
-        if (grounded) {
+        /*if (grounded) {
             moveDirection = new Vector3(Input.GetAxis("Horizontal"), -0.75f, Input.GetAxis("Vertical"));
             moveDirection = transform.TransformDirection(moveDirection);
             moveDirection *= speed;
@@ -71,7 +71,7 @@ public class FPSController : MonoBehaviour
         }
 
         // Side Rotation
-        transform.RotateAroundLocal(Vector3.up, sideTurn);
+        transform.RotateAroundLocal(Vector3.up, sideTurn);*/
 	}
     #endregion
 
