@@ -122,7 +122,6 @@ public class Networking : MonoBehaviour
     // Triggered when the server is initialized
     void OnServerInitialized() {
         guiRenderer = ServerInitializedGUI;
-        //SpawnPlayer(Network.player);
     }
 
     // Stops the server
@@ -145,7 +144,7 @@ public class Networking : MonoBehaviour
         // Instanciate the new player over the network
         Transform newPlayerTransform = (Transform)Network.Instantiate(
             prefabs["Unit"],
-            new Vector3(UnityEngine.Random.Range(0f, 50f), UnityEngine.Random.Range(0f, 50f), 0f),
+            new Vector3(UnityEngine.Random.Range(0f, 50f), 15f, UnityEngine.Random.Range(0f, 50f)),
             transform.rotation,
             playerNumber);
 
@@ -155,11 +154,6 @@ public class Networking : MonoBehaviour
         // Call the SetPlayer RPC on all the instances of the player over the network
         NetworkView theNetworkView = newPlayerTransform.networkView;
         theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
-
-        //Network.Instantiate(prefabs[prefabName],
-        //    new Vector3(Random.Range(-500f, 500f), 35f, Random.Range(-500f, 500f)),
-        //    Quaternion.identity,
-        //    0);
     }
 
     // Triggered when a player disconnects from the server
