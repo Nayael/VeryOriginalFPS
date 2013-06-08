@@ -10,14 +10,16 @@ class FPSControllerAuthoritative : MonoBehaviour
 
     private bool grounded;
     private Vector3 moveDirection = Vector3.zero;
+    private Camera fpsCam;
     #endregion
 
     #region Public Members
+    public Transform cameraPrefab = null;
     public NetworkPlayer owner;  // The instance's owner on the network
 
-    public float speed = 6.0f;
-    public float jumpSpeed = 8.0f;
-    public float angularSpeed = 8.0f;
+    public float speed = 40f;
+    public float jumpSpeed = 20f;
+    public float angularSpeed = 20f;
     public float maxVerticalAngle = 0.5f;
     public float gravity = 100.0f;
     public bool airControl = true;
@@ -47,6 +49,7 @@ class FPSControllerAuthoritative : MonoBehaviour
 
     #region Update
     void FixedUpdate() {
+        Debug.Log("FixedUpdate");
         CharacterController controller = GetComponent<CharacterController>();
 
         // Get the inputs only if we are the owner
@@ -113,18 +116,17 @@ class FPSControllerAuthoritative : MonoBehaviour
             float verticalTurn = -1 * serverCurrentInput["Mouse Y"] * mouseSensitivity.y * Time.deltaTime;
 
             // Vertical rotation
-            Camera fpsCamera = transform.camera;
-            fpsCamera.transform.Rotate(verticalTurn, 0f, 0f);
+            fpsCam.transform.Rotate(verticalTurn, 0f, 0f);
 
             // Capping the vertical rotation of the camera
-            if (fpsCamera.transform.localRotation.x < -maxVerticalAngle) {
-                var correctRot = fpsCamera.camera.transform.localRotation;
+            if (fpsCam.transform.localRotation.x < -maxVerticalAngle) {
+                var correctRot = fpsCam.camera.transform.localRotation;
                 correctRot.x = -maxVerticalAngle;
-                fpsCamera.camera.transform.localRotation = correctRot;
-            } else if (fpsCamera.transform.localRotation.x > maxVerticalAngle) {
-                var correctRot = fpsCamera.camera.transform.localRotation;
+                fpsCam.camera.transform.localRotation = correctRot;
+            } else if (fpsCam.transform.localRotation.x > maxVerticalAngle) {
+                var correctRot = fpsCam.camera.transform.localRotation;
                 correctRot.x = maxVerticalAngle;
-                fpsCamera.camera.transform.localRotation = correctRot;
+                fpsCam.camera.transform.localRotation = correctRot;
             }
 
             // Side Rotation
@@ -135,14 +137,12 @@ class FPSControllerAuthoritative : MonoBehaviour
 
     #region Networking
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-        Camera fpsCamera = transform.camera;
 
         // Writing data (on the server)
         if (stream.isWriting) {
-            Debug.Log(transform.GetComponentInChildren<Camera>());
             Vector3 pos = transform.position;
             Quaternion rot = transform.rotation;
-            Quaternion camRot = fpsCamera.transform.localRotation;
+            Quaternion camRot = fpsCam.transform.localRotation;
 
             stream.Serialize(ref pos);
             stream.Serialize(ref rot);
@@ -160,7 +160,7 @@ class FPSControllerAuthoritative : MonoBehaviour
 
             transform.position = posReceive;
             transform.rotation = rotReceive;
-            fpsCamera.transform.localRotation = camRotReceive;
+            fpsCam.transform.localRotation = camRotReceive;
         }
     }
     #endregion
@@ -171,13 +171,27 @@ class FPSControllerAuthoritative : MonoBehaviour
         owner = player;
         if (player == Network.player) {
             enabled = true;
+            Camera.main.enabled = false;
+            SetCamera();
+        }
+    }
 
-            if (Network.isClient) {
-                transform.camera.enabled = true;
-                transform.camera.transform.localRotation = Quaternion.identity;
-                transform.camera.transform.localPosition = Vector3.zero;
-                Camera.main.enabled = false;
-            }
+    [RPC]
+    public void SetCamera() {
+        Vector3 camPos = Vector3.zero;
+        Quaternion camRot = Quaternion.identity;
+
+        if (Network.isClient) {
+            fpsCam = GameObject.Find("FPSCamera").camera;
+            fpsCam.transform.parent = this.transform;
+            fpsCam.enabled = true;
+            fpsCam.transform.localPosition = camPos;
+            fpsCam.transform.localRotation = camRot;
+        } else {
+            Debug.Log("set camera");
+            fpsCam = ((Transform)Instantiate(cameraPrefab, camPos, camRot)).camera;
+            fpsCam.transform.parent = this.transform;
+            fpsCam.enabled = false;
         }
     }
 

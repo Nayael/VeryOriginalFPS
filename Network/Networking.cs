@@ -131,9 +131,9 @@ public class Networking : MonoBehaviour
 
     // Triggered when a player connects to the server
     void OnPlayerConnected(NetworkPlayer player) {
+        Debug.Log("Player " + (players.Count) + " connected from " + player.ipAddress + ":" + player.port);
         SpawnPlayer(player);
         players.Add(player);
-        Debug.Log("Player " + (players.Count) + " connected from " + player.ipAddress + ":" + player.port);
     }
 
     // Spawns a player over the network
@@ -154,6 +154,7 @@ public class Networking : MonoBehaviour
         // Call the SetPlayer RPC on all the instances of the player over the network
         NetworkView theNetworkView = newPlayerTransform.networkView;
         theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
+        newPlayerTransform.GetComponent<FPSControllerAuthoritative>().SetCamera();
     }
 
     // Triggered when a player disconnects from the server
