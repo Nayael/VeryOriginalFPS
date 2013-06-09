@@ -20,8 +20,8 @@ class FPSController : MonoBehaviour
     public Transform cameraPrefab = null;
     public NetworkPlayer owner;  // The instance's owner on the network
 
-    public float acceptableError = 1f;  // The acceptable difference in Unity units between a predicted value and the server response value
-    public float acceptableRotError = 0.1f;  // The acceptable difference in Unity units between a predicted value and the server response value
+    public float acceptableError = 6f;  // The acceptable difference in Unity units between a predicted value and the server response value
+    public float acceptableRotError = 0.3f;  // The acceptable difference in Unity units between a predicted value and the server response value
 
     public float speed = 40f;
     public float jumpSpeed = 20f;
@@ -30,6 +30,12 @@ class FPSController : MonoBehaviour
     public float gravity = 100.0f;
     public bool airControl = true;
     public Vector2 mouseSensitivity = new Vector2(1f, 100f);
+    #endregion
+
+    #region Properties
+    public Camera FPSCamera {
+        get { return fpsCam; }
+    }
     #endregion
 
     #region Initialization
@@ -197,48 +203,45 @@ class FPSController : MonoBehaviour
                 Quaternion predictedRot = transform.rotation;
                 Quaternion predictedCamRot = fpsCam.transform.localRotation;
 
+                Debug.Log("recieve " + posReceive);
+                Debug.Log("predicted " + predictedPos);
+
                 // Then calculate the difference between the predicted values and the recieved values
                 Vector3 diffPos = posReceive - predictedPos;
                 Quaternion diffRot = new Quaternion(
-                    rotReceive.x - predictedRot.x,
-                    rotReceive.y - predictedRot.y,
-                    rotReceive.z - predictedRot.z,
-                    rotReceive.w - predictedRot.w
+                    Mathf.Abs(rotReceive.x - predictedRot.x),
+                    Mathf.Abs(rotReceive.y - predictedRot.y),
+                    Mathf.Abs(rotReceive.z - predictedRot.z),
+                    Mathf.Abs(rotReceive.w - predictedRot.w)
                 );
                 Quaternion diffCamRot = new Quaternion(
-                    camRotReceive.x - predictedCamRot.x,
-                    camRotReceive.y - predictedCamRot.y,
-                    camRotReceive.z - predictedCamRot.z,
-                    camRotReceive.w - predictedCamRot.w
+                    Mathf.Abs(camRotReceive.x - predictedCamRot.x),
+                    Mathf.Abs(camRotReceive.y - predictedCamRot.y),
+                    Mathf.Abs(camRotReceive.z - predictedCamRot.z),
+                    Mathf.Abs(camRotReceive.w - predictedCamRot.w)
                 );
 
                 // If the difference is too big, correct the values on the client side (use average to smooth)
+                Debug.Log(acceptableError);
+                Debug.Log(diffPos);
                 if (Mathf.Abs(diffPos.x) > acceptableError
                     || Mathf.Abs(diffPos.y) > acceptableError
                     || Mathf.Abs(diffPos.z) > acceptableError) {
-                    transform.position = (predictedPos + posReceive) / 2f;
+                        GetComponent<CharacterController>().Move(diffPos);
+                        Debug.Log("SendCorrectedPosition");
+                        networkView.RPC("SendCorrectedPosition", RPCMode.Server, transform.position);
                 }
-                if (Mathf.Abs(diffRot.x) > acceptableRotError
-                    || Mathf.Abs(diffRot.y) > acceptableRotError
-                    || Mathf.Abs(diffRot.z) > acceptableRotError
-                    || Mathf.Abs(diffRot.w) > acceptableRotError) {
-                    transform.rotation = new Quaternion(
-                        (rotReceive.x + predictedRot.x) / 2f,
-                        (rotReceive.y + predictedRot.y) / 2f,
-                        (rotReceive.z + predictedRot.z) / 2f,
-                        (rotReceive.w + predictedRot.w) / 2f
-                    );
+                if (diffRot.x > acceptableRotError
+                    || diffRot.y > acceptableRotError
+                    || diffRot.z > acceptableRotError
+                    || diffRot.w > acceptableRotError) {
+                        transform.rotation = rotReceive;
                 }
-                if (Mathf.Abs(diffCamRot.x) > acceptableRotError
-                    || Mathf.Abs(diffCamRot.y) > acceptableRotError
-                    || Mathf.Abs(diffCamRot.z) > acceptableRotError
-                    || Mathf.Abs(diffCamRot.w) > acceptableRotError) {
-                    fpsCam.transform.localRotation = new Quaternion(
-                        (camRotReceive.x + predictedCamRot.x) / 2f,
-                        (camRotReceive.y + predictedCamRot.y) / 2f,
-                        (camRotReceive.z + predictedCamRot.z) / 2f,
-                        (camRotReceive.w + predictedCamRot.w) / 2f
-                    );
+                if (diffCamRot.x > acceptableRotError
+                    || diffCamRot.y > acceptableRotError
+                    || diffCamRot.z > acceptableRotError
+                    || diffCamRot.w > acceptableRotError) {
+                        fpsCam.transform.localRotation = camRotReceive;
                 }
 
             // Otherwise, if I am not the owner, just update with the server's data
@@ -257,25 +260,32 @@ class FPSController : MonoBehaviour
         if (player == Network.player) {
             enabled = true;
             Camera.main.enabled = false;
-            SetCamera();
         }
     }
 
     [RPC]
-    public void SetCamera() {
-        Vector3 camPos = Vector3.zero;
+    public void SetCamera(NetworkPlayer player) {
+        Vector3 camPos = new Vector3(0f, 0.025f, 0.26f);
         Quaternion camRot = Quaternion.identity;
 
-        if (Network.isClient) {
+        if (player == Network.player) {
             fpsCam = GameObject.Find("FPSCamera").camera;
             fpsCam.transform.parent = this.transform;
             fpsCam.enabled = true;
-            fpsCam.transform.localPosition = camPos;
-            fpsCam.transform.localRotation = camRot;
         } else {
             fpsCam = ((Transform)Instantiate(cameraPrefab, camPos, camRot)).camera;
             fpsCam.transform.parent = this.transform;
             fpsCam.enabled = false;
+        }
+        fpsCam.transform.localPosition = camPos;
+        fpsCam.transform.localRotation = camRot;
+    }
+
+    [RPC]
+    void SendCorrectedPosition(Vector3 correctedPosition) {
+        if (Network.isServer) {
+            Debug.Log("corrected position " + correctedPosition);
+            transform.position = correctedPosition;
         }
     }
 

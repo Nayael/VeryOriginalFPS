@@ -2,13 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-abstract public class AWeapon : MonoBehaviour
+abstract public class AWeapon : MonoBehaviour, IWeapon
 {
 
     #region Public Members
 	public Queue<Bullet> bullets = new Queue<Bullet>();
 	public Bullet bulletPrefab;
-	public bool heroOnly = false;
     #endregion
 	
     #region Protected Members
@@ -24,9 +23,9 @@ abstract public class AWeapon : MonoBehaviour
 
     #region Initialization
     void Start() {
-		if (!BulletsManager.Instance.pool.ContainsKey(this.GetType().Name)) {
-			BulletsManager.Instance.AddBulletType(this.GetType().Name, bulletPrefab);
-		}
+        //if (!BulletsManager.Instance.pool.ContainsKey(this.GetType().Name)) {
+        //    BulletsManager.Instance.AddBulletType(this.GetType().Name, bulletPrefab);
+        //}
 	}
     #endregion
 

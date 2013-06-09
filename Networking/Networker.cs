@@ -1,42 +1,44 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+using UnityEngine;
 
-public class Networking : MonoBehaviour
+using FPS.Game.Managers;
+
+public class Networker : MonoBehaviour
 {
 
     #region Private Members
     private int serverPort;
-	private Dictionary<string, Transform> prefabs = new Dictionary<string, Transform>();
+    private Dictionary<string, Transform> prefabs = new Dictionary<string, Transform>();
     private List<NetworkPlayer> players = new List<NetworkPlayer>();
     #endregion
-    
+
     #region Public Members
     public string serverIP;
     public string portTF;
     public int maxCo = 32;
-	
-    public delegate void GuiDelegate();
-	public GuiDelegate guiRenderer;
 
-	public List<string> prefabKeys;
-	public List<Transform> prefabValues;
+    public delegate void GuiDelegate();
+    public GuiDelegate guiRenderer;
+
+    public List<string> prefabKeys;
+    public List<Transform> prefabValues;
     public ArrayList playerScripts = new ArrayList();
     #endregion
 
     #region Initialization
-    void Awake(){
-		// Creating the prefabs Dictionary
-		for (int i = 0; i < prefabValues.Count; i++) {
-			prefabs[prefabKeys[i]] = prefabValues[i];
-		}
-	}
+    void Awake() {
+        // Creating the prefabs Dictionary
+        for (int i = 0; i < prefabValues.Count; i++) {
+            prefabs[prefabKeys[i]] = prefabValues[i];
+        }
+    }
 
-	// Use this for initialization
-	void Start () {
-		guiRenderer = MenuGUI;
-	}
+    // Use this for initialization
+    void Start() {
+        guiRenderer = MenuGUI;
+    }
     #endregion
 
     #region GUI
@@ -86,21 +88,21 @@ public class Networking : MonoBehaviour
     #region Client
     // Connects the client to the server
     void ConnectToServer() {
-		Debug.Log("Connecting...");
-		Network.Connect(serverIP, serverPort);
-	}
+        Debug.Log("Connecting...");
+        Network.Connect(serverIP, serverPort);
+    }
 
     // Triggered on the client when it's connected to the server
-	void OnConnectedToServer() {
-		Debug.Log("Connected to server");
-		guiRenderer = ClientConnectedGUI;
-	}
+    void OnConnectedToServer() {
+        Debug.Log("Connected to server");
+        guiRenderer = ClientConnectedGUI;
+    }
 
     // Triggered on the client when the connection failed
-	void OnFailedToConnect(NetworkConnectionError error) {
-		Debug.Log("Could not connect to server: " + error);
-		guiRenderer = MenuGUI;
-	}
+    void OnFailedToConnect(NetworkConnectionError error) {
+        Debug.Log("Could not connect to server: " + error);
+        guiRenderer = MenuGUI;
+    }
 
     // Disconnects the client from the server
     void DisconnectFromServer() {
@@ -114,7 +116,7 @@ public class Networking : MonoBehaviour
         Debug.Log("Remote disconnect signal received");
         DisconnectFromServer();
     }
-	#endregion
+    #endregion
 
     #region Server
     // Launches the server
@@ -129,6 +131,8 @@ public class Networking : MonoBehaviour
     // Triggered when the server is initialized
     void OnServerInitialized() {
         guiRenderer = ServerInitializedGUI;
+        //LevelManager lm = LevelManager.Instance;
+        //lm.Init();
     }
 
     // Stops the server
@@ -160,10 +164,11 @@ public class Networking : MonoBehaviour
         // Get the new player's script
         //playerScripts.Add(newPlayerTransform.GetComponent<FPSControllerAuthoritative>());
 
-        // Call the SetPlayer RPC on all the instances of the player over the network
-        NetworkView theNetworkView = newPlayerTransform.networkView;
-        theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
-        newPlayerTransform.GetComponent<FPSController>().SetCamera();
+        NetworkView playerNetworkView = newPlayerTransform.networkView;
+        playerNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
+        playerNetworkView.RPC("SetCamera", RPCMode.AllBuffered, player);
+        //newPlayerTransform.GetComponent<FPSController>().SetCamera();   // Handle the player's FPS Camera
+        playerNetworkView.RPC("TakeWeapon", player, "Gun");             // Give the player a default weapon
     }
 
     // Triggered when a player disconnects from the server
