@@ -202,6 +202,21 @@ public class Networker : MonoBehaviour
 
     // Destroys a player (its RPCs, references, etc.)
     public void DestroyPlayer(NetworkPlayer player) {
+        foreach (KeyValuePair<NetworkPlayer, Unit> script in playerScripts) {
+            if (player == script.Value.GetComponent<FPSController>().owner) {
+                Network.RemoveRPCs(script.Value.gameObject.networkView.viewID);
+                Network.Destroy(script.Value.gameObject);
+                playerScripts.Remove(script.Key);
+                break;
+            }
+        }
+
+        var playerNumber = int.Parse(player + "");
+        Network.RemoveRPCs(Network.player, playerNumber);
+
+        Network.RemoveRPCs(player);
+        Network.DestroyPlayerObjects(player);
+
         players.Remove(player);
         Network.RemoveRPCs(player);
         Network.DestroyPlayerObjects(player);
@@ -224,6 +239,7 @@ public class Networker : MonoBehaviour
                 Camera mainCamera = GameObject.FindWithTag("MainCamera").camera;
                 mainCamera.enabled = true;
             }
+            Application.LoadLevel(Application.loadedLevel);
         }
         guiRenderer = MenuGUI;
     }
@@ -235,3 +251,72 @@ public class Networker : MonoBehaviour
     #endregion
 
 }
+
+//public class Spawner : MonoBehaviour {
+
+//    public Transform playerPrefab;
+//    public ArrayList playerScripts = new ArrayList();
+
+//    void OnGUI()
+//    {
+//        var posGUI = 0;
+//        foreach (PlayerController script in playerScripts)
+//        {
+//            GUI.Label(new Rect(Screen.width - 300, 30 * posGUI, 300, 20), script.theOwner + " has " + script.hp.ToString());
+//            posGUI++;
+//        }
+
+//    }
+
+//    void OnServerInitialized()
+//    {
+//        SpawnPlayer(Network.player);
+//    }
+
+//    void OnPlayerConnected(NetworkPlayer player)
+//    {
+//        SpawnPlayer(player);
+//    }
+
+//    void OnPlayerDisconnected(NetworkPlayer player) 
+//    {
+//        UnSpawnPlayer(player);
+//    }
+
+//    //Le serveur a été détruit alors nous ne nous embêtons pas avec les objets présents : on les vire tous !
+//    void OnDisconnectedFromServer(NetworkDisconnection info)
+//    {
+//        Application.LoadLevel(Application.loadedLevel);
+//    }
+
+//    void SpawnPlayer(NetworkPlayer player)
+//    {
+//        string tempPlayerString = player.ToString();
+//        int playerNumber = int.Parse(tempPlayerString);
+//        Transform newPlayerTransform = (Transform)Network.Instantiate(playerPrefab, transform.position, transform.rotation, playerNumber);
+
+//        playerScripts.Add(newPlayerTransform.GetComponent("PlayerController"));
+//        NetworkView theNetworkView = newPlayerTransform.networkView;
+//        theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
+//    }
+
+//    void UnSpawnPlayer(NetworkPlayer player)
+//    {
+//        foreach (PlayerController script in playerScripts)
+//        {
+//            if (player == script.theOwner)
+//            {
+//                Network.RemoveRPCs(script.gameObject.networkView.viewID);
+//                Network.Destroy(script.gameObject);
+//                playerScripts.Remove(script);
+//                break;
+//            }
+//        }
+
+//        var playerNumber = int.Parse(player + "");
+//        Network.RemoveRPCs(Network.player, playerNumber);
+
+//        Network.RemoveRPCs(player);
+//        Network.DestroyPlayerObjects(player);
+//    }
+//}

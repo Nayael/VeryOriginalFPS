@@ -41,7 +41,6 @@ public class Unit : MonoBehaviour
     [RPC]
     public void Hurt(float damage, NetworkPlayer shooter) {
         health.Current -= damage;
-        Debug.Log("hurt me " + health.Current);
         // If we are the server and the unit has no health left, we make him die
         if (Network.isServer && health.Current == 0) {
             // I am the killer, add a frag
