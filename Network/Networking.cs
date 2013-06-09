@@ -104,8 +104,15 @@ public class Networking : MonoBehaviour
 
     // Disconnects the client from the server
     void DisconnectFromServer() {
-        Debug.Log("Disconnecting...");
+        Debug.Log("Disconnecting from " + serverIP + ":" + serverPort);
+        Network.RemoveRPCs(Network.player);
         Network.Disconnect();
+    }
+
+    [RPC]
+    void RemoteDisconnect() {
+        Debug.Log("Remote disconnect signal received");
+        DisconnectFromServer();
     }
 	#endregion
 
@@ -126,6 +133,8 @@ public class Networking : MonoBehaviour
 
     // Stops the server
     void ShutdownServer() {
+        networkView.RPC("RemoteDisconnect", RPCMode.Others); // Make other players disconnect before the server
+        Network.RemoveRPCs(Network.player);
         Network.Disconnect();
     }
 
@@ -149,7 +158,7 @@ public class Networking : MonoBehaviour
             playerNumber);
 
         // Get the new player's script
-        playerScripts.Add(newPlayerTransform.GetComponent<FPSControllerAuthoritative>());
+        //playerScripts.Add(newPlayerTransform.GetComponent<FPSControllerAuthoritative>());
 
         // Call the SetPlayer RPC on all the instances of the player over the network
         NetworkView theNetworkView = newPlayerTransform.networkView;
@@ -184,9 +193,16 @@ public class Networking : MonoBehaviour
                 Debug.Log("Lost connection to the server");
             } else {
                 Debug.Log("Successfully diconnected from the server");
+                Camera mainCamera = GameObject.FindWithTag("MainCamera").camera;
+                mainCamera.enabled = true;
             }
         }
         guiRenderer = MenuGUI;
+    }
+
+    [RPC]
+    void DestroyBuffered(NetworkViewID viewID) {
+        UnityEngine.Object.Destroy(NetworkView.Find(viewID).gameObject);
     }
     #endregion
 

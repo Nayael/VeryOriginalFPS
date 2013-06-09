@@ -1,15 +1,19 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-class FPSControllerAuthoritative : MonoBehaviour
+class FPSController : MonoBehaviour
 {
     #region Private Members
     private Dictionary<string, float> lastClientInput = new Dictionary<string, float>();
-    private Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
-    //private List<ArrayList> predictedMoves = new List<ArrayList>();
-    //private int serverCurrentInputID; // The ID of the currently treated inputs on the server
+    private Dictionary<string, Dictionary<string, float>> serverInput = new Dictionary<string, Dictionary<string, float>>();
+    private Dictionary<string, ArrayList> predictedMoves = new Dictionary<string, ArrayList>();
+    private int predictionId = 0;
+
+    // The ID of the currently treated inputs on the server
+    private int serverCurrentInputID = 0;
+    private int serverLastTreatedInputID = -1;
 
     private bool grounded;
     private Vector3 moveDirection = Vector3.zero;
@@ -44,24 +48,18 @@ class FPSControllerAuthoritative : MonoBehaviour
         lastClientInput.Add("Jump", 0f);
         lastClientInput.Add("Mouse X", 0f);
         lastClientInput.Add("Mouse Y", 0f);
-
-        serverCurrentInput.Add("Horizontal", 0f);
-        serverCurrentInput.Add("Vertical", 0f);
-        serverCurrentInput.Add("Jump", 0f);
-        serverCurrentInput.Add("Mouse X", 0f);
-        serverCurrentInput.Add("Mouse Y", 0f);
     }
     #endregion
 
     #region Update
     void FixedUpdate() {
         CharacterController controller = GetComponent<CharacterController>();
+        Vector3 moveInput = Vector3.zero;
+        Vector3 mouseInput = Vector3.zero;
 
         // Get the inputs only if we are the owner
         if (Network.player == owner) {
             Dictionary<string, float> currentClientInput = new Dictionary<string, float>();
-            Vector3 moveInput = Vector3.zero;
-            Vector3 mouseInput = Vector3.zero;
 
             currentClientInput.Add("Horizontal", Input.GetAxis("Horizontal"));
             currentClientInput.Add("Vertical", Input.GetAxis("Vertical"));
@@ -76,13 +74,11 @@ class FPSControllerAuthoritative : MonoBehaviour
                 lastClientInput["Vertical"] = currentClientInput["Vertical"];
                 lastClientInput["Jump"] = currentClientInput["Jump"];
 
-                moveInput = new Vector3 (
+                moveInput = new Vector3(
                     currentClientInput["Horizontal"],
                     currentClientInput["Vertical"],
                     currentClientInput["Jump"]
                 );
-                networkView.RPC("SendMovementInput", RPCMode.Server, moveInput);
-                //Debug.Log("Send inputs " + predictedMoves.Count + " : " + moveInput);
             }
 
             // If the mouse has moved
@@ -91,32 +87,67 @@ class FPSControllerAuthoritative : MonoBehaviour
                 lastClientInput["Mouse X"] = currentClientInput["Mouse X"];
                 lastClientInput["Mouse Y"] = currentClientInput["Mouse Y"];
 
-                mouseInput = new Vector3 (
+                mouseInput = new Vector3(
                     currentClientInput["Mouse X"],
                     currentClientInput["Mouse Y"],
                     0f
                 );
-                networkView.RPC("SendMouseInput", RPCMode.Server, mouseInput);
             }
         }
 
         // The movements are done on the server, predicted on the client
         if (Network.isServer || Network.player == owner) {
-            Dictionary<string, float> userInput = Network.isServer ? serverCurrentInput : lastClientInput;
-            //if (Network.isServer) {
-            //    Debug.Log("Process inputs " + serverCurrentInputID + " : " + userInput["Horizontal"] + " | " + userInput["Vertical"] + " | " + userInput["Jump"]);
-            //}
-            if (grounded) {
-                moveDirection = new Vector3(userInput["Horizontal"], 0, userInput["Vertical"]);
-                moveDirection = transform.TransformDirection(moveDirection);
-                moveDirection *= speed;
-                if (userInput["Jump"] != 0f) {
-                    moveDirection.y = jumpSpeed;
+            Dictionary<string, float> userInput = null;
+            float sideTurn = 0f;
+            float verticalTurn = 0f;
+
+            if (Network.isServer) {
+                if (serverInput.Count > 0) {
+                    serverLastTreatedInputID++;
+                    userInput = serverInput[serverLastTreatedInputID.ToString()];
                 }
-            } else if (airControl) {
-                moveDirection.x = userInput["Horizontal"] * speed;
-                moveDirection.z = userInput["Vertical"] * speed;
-                moveDirection = transform.TransformDirection(moveDirection);
+                Debug.Log("Process inputs " + serverLastTreatedInputID);
+                Debug.Log(serverInput.Count);
+            } else {
+                userInput = lastClientInput;
+            }
+
+            if (userInput != null) {
+                // ROTATION
+                // Mouse movement
+                sideTurn = angularSpeed * userInput["Mouse X"] * mouseSensitivity.x * Time.deltaTime;
+                verticalTurn = -1 * userInput["Mouse Y"] * mouseSensitivity.y * Time.deltaTime;
+
+                // Vertical rotation
+                fpsCam.transform.Rotate(verticalTurn, 0f, 0f);
+
+                // Capping the vertical rotation of the camera
+                if (fpsCam.transform.localRotation.x < -maxVerticalAngle) {
+                    Quaternion correctRot = fpsCam.camera.transform.localRotation;
+                    correctRot.x = -maxVerticalAngle;
+                    fpsCam.camera.transform.localRotation = correctRot;
+                } else if (fpsCam.transform.localRotation.x > maxVerticalAngle) {
+                    Quaternion correctRot = fpsCam.camera.transform.localRotation;
+                    correctRot.x = maxVerticalAngle;
+                    fpsCam.camera.transform.localRotation = correctRot;
+                }
+
+                // Side Rotation
+                transform.RotateAroundLocal(Vector3.up, sideTurn);
+
+                // TRANSLATION
+                if (grounded) {
+                    moveDirection = new Vector3(userInput["Horizontal"], 0, userInput["Vertical"]);
+                    moveDirection = transform.TransformDirection(moveDirection);
+                    moveDirection *= speed;
+                    if (userInput["Jump"] != 0f) {
+                        moveDirection.y = jumpSpeed;
+                    }
+                } else if (airControl) {
+                    moveDirection.x = userInput["Horizontal"] * speed;
+                    moveDirection.z = userInput["Vertical"] * speed;
+                    moveDirection = transform.TransformDirection(moveDirection);
+                }
             }
 
             // Apply gravity
@@ -125,35 +156,22 @@ class FPSControllerAuthoritative : MonoBehaviour
             // Move the controller
             grounded = (controller.Move(moveDirection * Time.deltaTime) & CollisionFlags.Below) != 0;
 
-            // Mouse movement
-            float sideTurn = angularSpeed * userInput["Mouse X"] * mouseSensitivity.x * Time.deltaTime;
-            float verticalTurn = -1 * userInput["Mouse Y"] * mouseSensitivity.y * Time.deltaTime;
-
-            // Vertical rotation
-            fpsCam.transform.Rotate(verticalTurn, 0f, 0f);
-
-            // Capping the vertical rotation of the camera
-            if (fpsCam.transform.localRotation.x < -maxVerticalAngle) {
-                Quaternion correctRot = fpsCam.camera.transform.localRotation;
-                correctRot.x = -maxVerticalAngle;
-                fpsCam.camera.transform.localRotation = correctRot;
-            } else if (fpsCam.transform.localRotation.x > maxVerticalAngle) {
-                Quaternion correctRot = fpsCam.camera.transform.localRotation;
-                correctRot.x = maxVerticalAngle;
-                fpsCam.camera.transform.localRotation = correctRot;
-            }
-
-            // Side Rotation
-            transform.RotateAroundLocal(Vector3.up, sideTurn);
-
             // On the client side, keep track of the predicted moves
-            //if (Network.player == owner) {
-            //    ArrayList prediction = new ArrayList();
-            //    prediction.Add(transform.position);
-            //    prediction.Add(transform.rotation);
-            //    prediction.Add(fpsCam.transform.localRotation);
-            //    predictedMoves.Add(prediction);
-            //}
+            if (Network.player == owner && (moveDirection != Vector3.zero || sideTurn != 0f || verticalTurn != 0f)) {
+                //Debug.Log("client " + transform.position);
+                ArrayList prediction = new ArrayList();
+                prediction.Add(transform.position);
+                prediction.Add(transform.rotation);
+                prediction.Add(fpsCam.transform.localRotation);
+                predictedMoves.Add(predictionId.ToString(), prediction);
+
+                networkView.RPC("SendMovementInput", RPCMode.Server, predictionId, moveInput);
+                networkView.RPC("SendMouseInput", RPCMode.Server, predictionId, mouseInput);
+
+                predictionId++;
+            }
+            //else
+            //    Debug.Log("server " + transform.position);
         }
     }
     #endregion
@@ -163,39 +181,44 @@ class FPSControllerAuthoritative : MonoBehaviour
 
         // Writing data (on the server)
         if (stream.isWriting) {
+
+            if (serverLastTreatedInputID == -1) {
+                return;
+            }
             Vector3 pos = transform.position;
             Quaternion rot = transform.rotation;
             Quaternion camRot = fpsCam.transform.localRotation;
 
-            //stream.Serialize(ref serverCurrentInputID);
+            stream.Serialize(ref serverLastTreatedInputID);
             stream.Serialize(ref pos);
             stream.Serialize(ref rot);
             stream.Serialize(ref camRot);
+            Debug.Log("server send " + serverLastTreatedInputID + " | " + pos);
 
-        // Receiving data (on the clients)
+            // Receiving data (on the clients)
         } else {
             Vector3 posReceive = Vector3.zero;
             Quaternion rotReceive = Quaternion.identity;
             Quaternion camRotReceive = Quaternion.identity;
 
-            //stream.Serialize(ref serverCurrentInputID);
+            stream.Serialize(ref serverCurrentInputID);
             stream.Serialize(ref posReceive);
             stream.Serialize(ref rotReceive);
             stream.Serialize(ref camRotReceive);
 
-            // If I am the owner, I am the one who made the prediction
-            if (Network.player == owner) {
+            if (Network.player == owner && predictedMoves.ContainsKey(serverCurrentInputID.ToString())) {
 
                 // First, retrieve the predicted moves corresponding to the received input from the server
-                //ArrayList predictedMove = predictedMoves[serverCurrentInputID];
-                //predictedMoves.RemoveAt(serverCurrentInputID);
+                ArrayList predictedMove = predictedMoves[serverCurrentInputID.ToString()];
+                predictedMoves.Remove(serverCurrentInputID.ToString());
 
-                //Vector3 predictedPos = (Vector3)predictedMove[0];
-                //Quaternion predictedRot = (Quaternion)predictedMove[1];
-                //Quaternion predictedCamRot = (Quaternion)predictedMove[2];
-                Vector3 predictedPos = transform.position;
-                Quaternion predictedRot = transform.rotation;
-                Quaternion predictedCamRot = fpsCam.transform.localRotation;
+                Vector3 predictedPos = (Vector3)predictedMove[0];
+                Quaternion predictedRot = (Quaternion)predictedMove[1];
+                Quaternion predictedCamRot = (Quaternion)predictedMove[2];
+
+                Debug.Log("recieve " + serverCurrentInputID);
+                Debug.Log("predicted : " + predictedPos + " | " + predictedRot + " | " + predictedCamRot);
+                Debug.Log("recieved : " + posReceive + " | " + rotReceive + " | " + camRotReceive);
 
                 // Then calculate the difference between the predicted values and the recieved values
                 Vector3 diffPos = posReceive - predictedPos;
@@ -212,39 +235,27 @@ class FPSControllerAuthoritative : MonoBehaviour
                     camRotReceive.w - predictedCamRot.w
                 );
 
-                // If the difference is too big, correct the values on the client side (use average to smooth)
+                // If the difference is too big, correct the values on the client side
                 if (Mathf.Abs(diffPos.x) > acceptableError
                     || Mathf.Abs(diffPos.y) > acceptableError
                     || Mathf.Abs(diffPos.z) > acceptableError) {
-                    transform.position = (predictedPos + posReceive) / 2f;
+                    //Debug.Log("Correct position");
+                    transform.position = posReceive;
                 }
                 if (Mathf.Abs(diffRot.x) > acceptableRotError
                     || Mathf.Abs(diffRot.y) > acceptableRotError
                     || Mathf.Abs(diffRot.z) > acceptableRotError
                     || Mathf.Abs(diffRot.w) > acceptableRotError) {
-                    transform.rotation = new Quaternion(
-                        (rotReceive.x + predictedRot.x) / 2f,
-                        (rotReceive.y + predictedRot.y) / 2f,
-                        (rotReceive.z + predictedRot.z) / 2f,
-                        (rotReceive.w + predictedRot.w) / 2f
-                    );
+                    //Debug.Log("Correct rotation");
+                    transform.rotation = rotReceive;
                 }
                 if (Mathf.Abs(diffCamRot.x) > acceptableRotError
                     || Mathf.Abs(diffCamRot.y) > acceptableRotError
                     || Mathf.Abs(diffCamRot.z) > acceptableRotError
                     || Mathf.Abs(diffCamRot.w) > acceptableRotError) {
-                    fpsCam.transform.localRotation = new Quaternion(
-                        (camRotReceive.x + predictedCamRot.x) / 2f,
-                        (camRotReceive.y + predictedCamRot.y) / 2f,
-                        (camRotReceive.z + predictedCamRot.z) / 2f,
-                        (camRotReceive.w + predictedCamRot.w) / 2f
-                    );
+                    //Debug.Log("Correct FPS camera rotation");
+                    fpsCam.transform.localRotation = camRotReceive;
                 }
-
-            // Otherwise, if I am not the owner, just update with the server's data
-            } else {
-                transform.position = posReceive;
-                transform.rotation = rotReceive;
             }
         }
     }
@@ -280,18 +291,26 @@ class FPSControllerAuthoritative : MonoBehaviour
     }
 
     [RPC]
-    void SendMovementInput(/*int inputID, */Vector3 clientInput) {
-        //serverCurrentInputID = inputID;
-        serverCurrentInput["Horizontal"] = clientInput.x;
-        serverCurrentInput["Vertical"] = clientInput.y;
-        serverCurrentInput["Jump"] = clientInput.z;
+    void SendMovementInput(int inputID, Vector3 clientInput) {
+        Debug.Log("recieve inputID " + inputID);
+        Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
+        serverCurrentInput.Add("Horizontal", clientInput.x);
+        serverCurrentInput.Add("Vertical", clientInput.y);
+        serverCurrentInput.Add("Jump", clientInput.z);
+        serverInput.Add(inputID.ToString(), serverCurrentInput);
     }
 
     [RPC]
-    void SendMouseInput(/*int inputID, */Vector3 clientInput) {
-        //serverCurrentInputID = inputID;
-        serverCurrentInput["Mouse X"] = clientInput.x;
-        serverCurrentInput["Mouse Y"] = clientInput.y;
+    void SendMouseInput(int inputID, Vector3 clientInput) {
+        if (serverInput.ContainsKey(inputID.ToString())) {
+            serverInput[inputID.ToString()].Add("Mouse X", clientInput.x);
+            serverInput[inputID.ToString()].Add("Mouse Y", clientInput.y);
+        } else {
+            Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
+            serverCurrentInput.Add("Mouse X", clientInput.x);
+            serverCurrentInput.Add("Mouse Y", clientInput.y);
+            serverInput.Add(inputID.ToString(), serverCurrentInput);
+        }
     }
     #endregion
 }
