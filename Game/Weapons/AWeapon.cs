@@ -9,26 +9,22 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
 	public Queue<Bullet> bullets = new Queue<Bullet>();
     public int baseAmmo = 0;
     public int baseCooldown = 0;
+    public Unit owner;
     public string bulletType;
     #endregion
 	
     #region Protected Members
-	protected Unit _owner;
     protected int _cooldown = 0;
     protected int _ammo = 0;
     #endregion
 
     #region Properties
-    public Unit Owner {
-        get { return _owner; }
-        set { _owner = value; }
-    }
     public int Cooldown {
         get { return _cooldown; }
     }
     public int Ammo {
         get {
-            return _cooldown;
+            return _ammo;
         }
         set {
             if (value < 0) {
@@ -41,8 +37,8 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
 
     #region Initialization
     public void Init() {
-        
-	}
+        _ammo = baseAmmo;
+    }
     #endregion
 
     #region Methods
@@ -62,4 +58,6 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
     public void EndCooldown() {
         _cooldown = 0;
     }
+
+    abstract public bool CanHit(Unit unit);
 }

@@ -58,8 +58,8 @@ public sealed class WeaponManager
         return weapon;
 	}
 
-    public Transform GetWeaponPrefab(string type) {
-        return (Transform)Object.Instantiate(prefabs[type]);
+    public Object GetWeaponPrefab(string type) {
+        return Object.Instantiate(prefabs[type]);
     }
     #endregion
 

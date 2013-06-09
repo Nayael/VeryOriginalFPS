@@ -74,7 +74,13 @@ public class Networker : MonoBehaviour
             }
             if (GameObject.FindGameObjectWithTag("Player") != null) {
                 GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-                GUI.Label(new Rect(0, Screen.height - 20, 80, 20), playerGO.GetComponent<Health>().Current.ToString());
+                GUI.Label(new Rect(0, 20, 80, 30), " Frags : " + playerGO.GetComponent<Shooter>().frags.ToString());
+                GUI.Label(new Rect(0, 40, 130, 30), " Deaths : " + playerGO.GetComponent<Shooter>().deaths.ToString());
+                GUI.Label(new Rect(0, Screen.height - 20, 80, 20), " + " + playerGO.GetComponent<Unit>().health.Current.ToString());
+
+                if (playerGO.GetComponent<Shooter>().Weapon != null) {
+                    GUI.Label(new Rect(Screen.width - 80, Screen.height - 20, 80, 20), " Ammo : " + playerGO.GetComponent<Shooter>().Weapon.Ammo);
+                }
             }
         }
     }
@@ -148,10 +154,9 @@ public class Networker : MonoBehaviour
 
     // Triggered when a player connects to the server
     void OnPlayerConnected(NetworkPlayer player) {
-        Debug.Log("Player " + (players.Count) + " connected from " + player.ipAddress + ":" + player.port);
+        Debug.Log("Player " + player + " connected from " + player.ipAddress + ":" + player.port);
         SpawnPlayer(player);
         players.Add(player);
-        Debug.Log("add player " + player);
     }
 
     // Spawns a player over the network
@@ -172,6 +177,21 @@ public class Networker : MonoBehaviour
         NetworkView playerNetworkView = newPlayerTransform.networkView;
         playerNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
         playerNetworkView.RPC("TakeWeapon", player, "Gun");             // Give the player a default weapon
+        //newPlayerTransform.GetComponent<Shooter>().TakeWeapon("Gun");
+    }
+
+    // Makes a player respawn
+    public void RespawnPlayer(NetworkPlayer player) {
+        Vector3 position;
+        RaycastHit hit;
+
+        // We make sure he doesn't collide with anything
+        do {
+            position = new Vector3(UnityEngine.Random.Range(0f, 50f), 15f, UnityEngine.Random.Range(0f, 50f));
+        } while (Physics.SphereCast(position, 2f, playerScripts[player].transform.forward, out hit));
+        
+        // And make him respawn
+        playerScripts[player].networkView.RPC("Respawn", RPCMode.AllBuffered, position);
     }
 
     // Triggered when a player disconnects from the server

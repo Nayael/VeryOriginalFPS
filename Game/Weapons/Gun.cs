@@ -18,13 +18,13 @@ public class Gun : AWeapon, IWeapon
 
     #region Shoot
     override public void Shoot() {
-        if (_cooldown != 0) {
+        if (_cooldown != 0 || Network.isServer) {
             return;
         }
         _cooldown = baseCooldown;
         Ammo--;
 
-        Camera fpsCam = _owner.GetComponent<FPSController>().FPSCamera;
+        Camera fpsCam = owner.GetComponent<FPSController>().FPSCamera;
         Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         //Debug.DrawRay(ray.origin, ray.direction * 500000f, Color.red, 556564665416f);
         //Debug.Log(ray.origin + " | " + ray.direction);
@@ -35,8 +35,7 @@ public class Gun : AWeapon, IWeapon
             Collider collider = hit.collider;
             if (collider.GetComponent<Unit>() != null) {
                 NetworkPlayer target = collider.GetComponent<FPSController>().owner;
-
-                collider.GetComponent<Unit>().networkView.RPC("ShootAt", RPCMode.Server, Gun.strength, target);
+                collider.networkView.RPC("ShootAtMe", RPCMode.Server, Gun.strength, fpsCam.transform.parent.GetComponent<FPSController>().owner);
                 direction = hit.point;
                 //Debug.DrawRay(ray.origin, hit.point * 500000f, Color.yellow, 556564665416f);
                 //Debug.Log(direction);
@@ -48,6 +47,24 @@ public class Gun : AWeapon, IWeapon
         //base.Shoot(direction);
     }
 
+    // Checks if the gun can hit a given target
+    override public bool CanHit(Unit unit) {
+        Camera fpsCam = owner.GetComponent<FPSController>().FPSCamera;
+        Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+		RaycastHit hit;
+        Vector3 direction = Vector3.zero;
+
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity)) {
+            return true;
+            Collider collider = hit.collider;
+            if (collider.GetComponent<Unit>() == unit) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     //override public void Shoot(Vector3 position, Vector3 direction) {
     //    if (_cooldown != 0) {
     //        return;
@@ -55,7 +72,7 @@ public class Gun : AWeapon, IWeapon
     //    base.Shoot(position, direction);
     //    _cooldown = baseCooldown;
     //    GunBullet bullet = (GunBullet)BulletsManager.Instance.GetBullet(bulletType);
-    //    bullet.Fire(_owner, position, direction);   // Fire the bullet
+    //    bullet.Fire(owner, position, direction);   // Fire the bullet
     //}
     #endregion
 }

@@ -15,12 +15,27 @@ public class Shooter : MonoBehaviour
 
     #region Public Members
     public bool autoEquip = true;
+    public int frags = 0;
+    public int deaths = 0;
+    #endregion
+
+    #region Properties
+    public AWeapon Weapon {
+        get { return _weapon; }
+    }
     #endregion
 
     #region Initialization
     void Awake() {
         enabled = false;
 	}
+
+    // We reinitialize the weapons ammo (used for respawn)
+    public void Init() {
+        foreach (AWeapon possessedWeapon in _weapons) {
+            possessedWeapon.Init();
+        }
+    }
     #endregion
 
     #region Update
@@ -39,33 +54,42 @@ public class Shooter : MonoBehaviour
 	}
     #endregion
 
-    #region RPC
+    #region Methods
     void EquipWeapon(AWeapon weapon) {
         // First, we make the previous weapon invisible
         if (_weapon != null) {
-            _weapon.transform.renderer.enabled = false;
+            _weapon.gameObject.active = false;
+            _weapon.enabled = false;
         }
 
         _weapon = weapon;
-        _weapon.transform.renderer.enabled = true;
+        _weapon.gameObject.active = true;
+        _weapon.enabled = true;
 
         _weapon.transform.localPosition = new Vector3(0.34f, -0.35f, 0.61f);
         networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString());
     }
+    #endregion
+
+    #region RPC
+    [RPC]
+    void AddFrag() {
+        frags++;
+    }
 
     [RPC]
     void EquipWeaponRemote(string weaponType) {
-
         // Change weapon
         AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
         _weapon = weapon;
+        _weapon.owner = GetComponent<Unit>();
         Camera fpsCam = GetComponent<FPSController>().FPSCamera;
         _weapon.transform.parent = fpsCam.transform;
         _weapon.transform.localPosition = new Vector3(0.34f, -0.35f, 0.61f);
     }
 
     [RPC]
-    void TakeWeapon(string weaponType) {
+    public void TakeWeapon(string weaponType) {
         // If the weapon is already in the inventory, then don't continue
         foreach (AWeapon possessedWeapon in _weapons) {
             if (possessedWeapon.GetType().ToString() == weaponType) {
@@ -77,7 +101,9 @@ public class Shooter : MonoBehaviour
         AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
         Camera fpsCam = GetComponent<FPSController>().FPSCamera;
         weapon.transform.parent = fpsCam.transform;
-        weapon.Owner = GetComponent<Unit>();
+        weapon.owner = GetComponent<Unit>();
+        weapon.gameObject.active = false;
+        weapon.enabled = false;
         _weapons.Add(weapon);
 
         // Equip it if necessary
