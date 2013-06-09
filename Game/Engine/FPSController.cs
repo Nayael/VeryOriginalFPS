@@ -186,7 +186,7 @@ class FPSController : MonoBehaviour
 
         // Writing data (on the server)
         if (stream.isWriting) {
-            Vector3 pos = transform.position;
+            Vector3 pos = transform.localPosition;
             Quaternion rot = transform.rotation;
             Quaternion camRot = fpsCam.transform.localRotation;
 
@@ -216,7 +216,7 @@ class FPSController : MonoBehaviour
                 //Vector3 predictedPos = (Vector3)predictedMove[0];
                 //Quaternion predictedRot = (Quaternion)predictedMove[1];
                 //Quaternion predictedCamRot = (Quaternion)predictedMove[2];
-                Vector3 predictedPos = transform.position;
+                Vector3 predictedPos = transform.localPosition;
                 Quaternion predictedRot = transform.rotation;
                 Quaternion predictedCamRot = fpsCam.transform.localRotation;
 
@@ -244,8 +244,9 @@ class FPSController : MonoBehaviour
                 if (Mathf.Abs(diffPos.x) > acceptableError
                     || Mathf.Abs(diffPos.y) > acceptableError
                     || Mathf.Abs(diffPos.z) > acceptableError) {
-                        GetComponent<CharacterController>().Move(diffPos);
-                        networkView.RPC("SendCorrectedPosition", RPCMode.Server, transform.position);
+                        //GetComponent<CharacterController>().Move(diffPos);
+                        transform.localPosition = posReceive;
+                        //networkView.RPC("SendCorrectedPosition", RPCMode.Server, transform.position);
                 }
                 if (diffRot.x > acceptableRotError
                     || diffRot.y > acceptableRotError

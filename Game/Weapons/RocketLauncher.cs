@@ -4,10 +4,6 @@ using UnityEngine;
 public class RocketLauncher : AWeapon, IWeapon
 {
 
-    #region Private Members
-    private static float strength = 25f;
-    #endregion
-
     #region Update
     void Update() {
         if (_cooldown > 0) {
