@@ -163,7 +163,7 @@ public class Networking : MonoBehaviour
         // Call the SetPlayer RPC on all the instances of the player over the network
         NetworkView theNetworkView = newPlayerTransform.networkView;
         theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
-        newPlayerTransform.GetComponent<FPSControllerAuthoritative>().SetCamera();
+        newPlayerTransform.GetComponent<FPSController>().SetCamera();
     }
 
     // Triggered when a player disconnects from the server

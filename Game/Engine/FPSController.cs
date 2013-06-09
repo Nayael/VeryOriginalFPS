@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-class FPSControllerAuthoritative : MonoBehaviour
+class FPSController : MonoBehaviour
 {
     #region Private Members
     private Dictionary<string, float> lastClientInput = new Dictionary<string, float>();
