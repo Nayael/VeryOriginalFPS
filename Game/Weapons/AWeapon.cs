@@ -7,37 +7,59 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
 
     #region Public Members
 	public Queue<Bullet> bullets = new Queue<Bullet>();
-	public Bullet bulletPrefab;
+    public int baseAmmo = 0;
+    public int baseCooldown = 0;
+    public string bulletType;
     #endregion
 	
     #region Protected Members
-	protected Unit owner;
+	protected Unit _owner;
+    protected int _cooldown = 0;
+    protected int _ammo = 0;
     #endregion
 
     #region Properties
     public Unit Owner {
-        get;
-        set;
+        get { return _owner; }
+        set { _owner = value; }
+    }
+    public int Cooldown {
+        get { return _cooldown; }
+    }
+    public int Ammo {
+        get {
+            return _cooldown;
+        }
+        set {
+            if (value < 0) {
+                value = 0;
+            }
+            _ammo = value;
+        }
     }
     #endregion
 
     #region Initialization
-    void Start() {
-        //if (!BulletsManager.Instance.pool.ContainsKey(this.GetType().Name)) {
-        //    BulletsManager.Instance.AddBulletType(this.GetType().Name, bulletPrefab);
-        //}
+    public void Init() {
+        
 	}
     #endregion
 
     #region Methods
-    /**
-	 * The weapon shoots a bullet
-	 */
-	public void Shoot(Vector3 direction) {
-		Shoot(owner.transform.localPosition, direction);
+    abstract public void Shoot();
+
+	public virtual void Shoot(Vector3 direction) {
+        Shoot(this.transform.position, direction);
 	}
 
-	abstract public void Shoot(Vector3 position, Vector3 direction);
+    public virtual void Shoot(Vector3 position, Vector3 direction) {
+        Ammo--;
+        //Debug.Log("Shoot " + bulletType);
+    }
     #endregion
 
+
+    public void EndCooldown() {
+        _cooldown = 0;
+    }
 }

@@ -4,19 +4,19 @@ public class Health : MonoBehaviour
 {
 
     #region Private Members
-    private int current;
+    private float current;
     #endregion
 
     #region Public Members
-    public int baseHP = 100;
+    public float baseHP = 100f;
     #endregion
 
     #region Properties
-    public int Current {
+    public float Current {
         get { return current; }
         set {
-            if (value < 0) {
-                value = 0;
+            if (value < 0f) {
+                value = 0f;
             }
             current = value;
         }
@@ -29,4 +29,9 @@ public class Health : MonoBehaviour
     }
     #endregion
 
+    #region Methods
+    public void Fill() {
+        current = baseHP;
+    }
+    #endregion
 }

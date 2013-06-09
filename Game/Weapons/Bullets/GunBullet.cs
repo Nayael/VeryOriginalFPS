@@ -5,9 +5,9 @@ public class GunBullet : Bullet
 {
 	
     #region Update
-	override protected void Update () {
-		transform.Translate((direction != Vector3.zero ? direction : Vector3.up) * (100f / weight) * Time.deltaTime);
-		base.Update();
+	void FixedUpdate () {
+        //Debug.Log(_direction);
+		transform.Translate(Vector3.forward * (1f / weight) * Time.deltaTime);
     }
     #endregion
 

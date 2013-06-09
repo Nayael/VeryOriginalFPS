@@ -47,7 +47,15 @@ public sealed class WeaponManager
 	}
 
     public AWeapon GetWeapon(string type) {
-        return pool[type].Dequeue();
+        AWeapon weapon;
+        if (pool[type].Count == 0) {
+            Object weaponPrefab = GetWeaponPrefab(type);
+            weapon = (AWeapon)((GameObject)Object.Instantiate(weaponPrefab)).GetComponent(type);
+            pool[type].Enqueue(weapon);
+        }
+        weapon = pool[type].Dequeue();
+        weapon.Init();
+        return weapon;
 	}
 
     public Transform GetWeaponPrefab(string type) {

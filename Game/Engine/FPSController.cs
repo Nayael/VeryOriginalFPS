@@ -203,8 +203,8 @@ class FPSController : MonoBehaviour
                 Quaternion predictedRot = transform.rotation;
                 Quaternion predictedCamRot = fpsCam.transform.localRotation;
 
-                Debug.Log("recieve " + posReceive);
-                Debug.Log("predicted " + predictedPos);
+                //Debug.Log("recieve " + posReceive);
+                //Debug.Log("predicted " + predictedPos);
 
                 // Then calculate the difference between the predicted values and the recieved values
                 Vector3 diffPos = posReceive - predictedPos;
@@ -222,13 +222,12 @@ class FPSController : MonoBehaviour
                 );
 
                 // If the difference is too big, correct the values on the client side (use average to smooth)
-                Debug.Log(acceptableError);
-                Debug.Log(diffPos);
+                //Debug.Log(acceptableError);
+                //Debug.Log(diffPos);
                 if (Mathf.Abs(diffPos.x) > acceptableError
                     || Mathf.Abs(diffPos.y) > acceptableError
                     || Mathf.Abs(diffPos.z) > acceptableError) {
                         GetComponent<CharacterController>().Move(diffPos);
-                        Debug.Log("SendCorrectedPosition");
                         networkView.RPC("SendCorrectedPosition", RPCMode.Server, transform.position);
                 }
                 if (diffRot.x > acceptableRotError
@@ -259,8 +258,13 @@ class FPSController : MonoBehaviour
         owner = player;
         if (player == Network.player) {
             enabled = true;
+            gameObject.tag = "Player";
             Camera.main.enabled = false;
+            if (GetComponent<Shooter>() != null) {
+                GetComponent<Shooter>().enabled = true;
+            }
         }
+        SetCamera(player);
     }
 
     [RPC]
@@ -284,7 +288,6 @@ class FPSController : MonoBehaviour
     [RPC]
     void SendCorrectedPosition(Vector3 correctedPosition) {
         if (Network.isServer) {
-            Debug.Log("corrected position " + correctedPosition);
             transform.position = correctedPosition;
         }
     }

@@ -18,14 +18,24 @@ public class Shooter : MonoBehaviour
     #endregion
 
     #region Initialization
-    void Start() {
-	
+    void Awake() {
+        enabled = false;
 	}
     #endregion
 
     #region Update
     void Update() {
-	
+        if (_weapon == null) {
+            return;
+        }
+        if (Input.GetButton("Fire1")) {
+            if (_weapon.Cooldown == 0) {
+                _weapon.Shoot();
+            }
+        }
+        if (Input.GetButtonUp("Fire1")) {
+            _weapon.EndCooldown();
+        }
 	}
     #endregion
 
@@ -65,10 +75,10 @@ public class Shooter : MonoBehaviour
 
         // If it's a new weapon, we get one from the WeaponManager, and add it to the inventory
         AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
-        _weapons.Add(weapon);
-
         Camera fpsCam = GetComponent<FPSController>().FPSCamera;
         weapon.transform.parent = fpsCam.transform;
+        weapon.Owner = GetComponent<Unit>();
+        _weapons.Add(weapon);
 
         // Equip it if necessary
         if (autoEquip == true) {

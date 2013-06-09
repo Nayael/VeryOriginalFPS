@@ -22,7 +22,7 @@ public class FPSWalker : MonoBehaviour
     // Units that player can fall before a falling damage function is run. To disable, type "infinity" in the inspector
     public float fallingDamageThreshold = 10.0f;
 
-    // If the player ends up on a slope which is at least the Slope Limit as set on the character controller, then he will slide down
+    // If the player ends up on a slope which is at least the Slope Limit as set on the owner controller, then he will slide down
     public bool slideWhenOverSlopeLimit = false;
 
     // If checked and the player is on an object tagged "Slide", he will slide down it regardless of the slope limit
@@ -30,7 +30,7 @@ public class FPSWalker : MonoBehaviour
 
     public float slideSpeed = 12.0f;
 
-    // If checked, then the player can change direction while in the air
+    // If checked, then the player can change _direction while in the air
     public bool airControl = false;
 
     // Small amounts of this results in bumping when walking down slopes, but large amounts results in falling too fast

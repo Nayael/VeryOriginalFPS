@@ -11,7 +11,6 @@ public class Networker : MonoBehaviour
     #region Private Members
     private int serverPort;
     private Dictionary<string, Transform> prefabs = new Dictionary<string, Transform>();
-    private List<NetworkPlayer> players = new List<NetworkPlayer>();
     #endregion
 
     #region Public Members
@@ -24,7 +23,8 @@ public class Networker : MonoBehaviour
 
     public List<string> prefabKeys;
     public List<Transform> prefabValues;
-    public ArrayList playerScripts = new ArrayList();
+    public List<NetworkPlayer> players = new List<NetworkPlayer>();
+    public Dictionary<NetworkPlayer, Unit> playerScripts = new Dictionary<NetworkPlayer, Unit>();
     #endregion
 
     #region Initialization
@@ -72,6 +72,10 @@ public class Networker : MonoBehaviour
             if (GUILayout.Button("Disconnect")) {
                 DisconnectFromServer();
             }
+            if (GameObject.FindGameObjectWithTag("Player") != null) {
+                GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+                GUI.Label(new Rect(0, Screen.height - 20, 80, 20), playerGO.GetComponent<Health>().Current.ToString());
+            }
         }
     }
 
@@ -105,7 +109,7 @@ public class Networker : MonoBehaviour
     }
 
     // Disconnects the client from the server
-    void DisconnectFromServer() {
+    public void DisconnectFromServer() {
         Debug.Log("Disconnecting from " + serverIP + ":" + serverPort);
         Network.RemoveRPCs(Network.player);
         Network.Disconnect();
@@ -147,6 +151,7 @@ public class Networker : MonoBehaviour
         Debug.Log("Player " + (players.Count) + " connected from " + player.ipAddress + ":" + player.port);
         SpawnPlayer(player);
         players.Add(player);
+        Debug.Log("add player " + player);
     }
 
     // Spawns a player over the network
@@ -162,12 +167,10 @@ public class Networker : MonoBehaviour
             playerNumber);
 
         // Get the new player's script
-        //playerScripts.Add(newPlayerTransform.GetComponent<FPSControllerAuthoritative>());
+        playerScripts.Add(player, newPlayerTransform.GetComponent<Unit>());
 
         NetworkView playerNetworkView = newPlayerTransform.networkView;
         playerNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
-        playerNetworkView.RPC("SetCamera", RPCMode.AllBuffered, player);
-        //newPlayerTransform.GetComponent<FPSController>().SetCamera();   // Handle the player's FPS Camera
         playerNetworkView.RPC("TakeWeapon", player, "Gun");             // Give the player a default weapon
     }
 
@@ -175,11 +178,11 @@ public class Networker : MonoBehaviour
     void OnPlayerDisconnected(NetworkPlayer player) {
         Debug.Log("Clean up after player " + player);
         DestroyPlayer(player);
-        players.Remove(player);
     }
 
     // Destroys a player (its RPCs, references, etc.)
-    void DestroyPlayer(NetworkPlayer player) {
+    public void DestroyPlayer(NetworkPlayer player) {
+        players.Remove(player);
         Network.RemoveRPCs(player);
         Network.DestroyPlayerObjects(player);
     }

@@ -31,11 +31,11 @@ public class GameManager : MonoBehaviour
 
     #region Update
     void Update () {
-		if (!running && Input.GetKeyDown(KeyCode.Space)) {	// If the game is not running yet, and the player presses Space
-			GameEventManager.TriggerGameStart();
-		} else if (running) {
+        //if (!running && Input.GetKeyDown(KeyCode.Space)) {	// If the game is not running yet, and the player presses Space
+        //    GameEventManager.TriggerGameStart();
+        //} else if (running) {
 
-		}
+        //}
 	}
     #endregion
 

@@ -2,53 +2,62 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class BulletsManager : MonoBehaviour
+public class BulletsManager
 {
-    
-    #region Public Members
-	public int poolSize;
-	public Dictionary<string, Queue<Bullet>> pool = new Dictionary<string, Queue<Bullet>>();
-    #endregion
 
-    #region Static Members
-    private static BulletsManager instance;
-    #endregion
+    #region Singleton Stuff
+    private static readonly BulletsManager instance = new BulletsManager();
 
-    #region Properties
     public static BulletsManager Instance {
         get {
-            if (instance == null) {
-                instance = GameObject.FindObjectOfType(typeof(BulletsManager)) as BulletsManager;
-            }
             return instance;
         }
     }
     #endregion
 
-    #region Initialization
-    private BulletsManager() { }
+    #region Public Members
+	public int poolSize = 50;
+    public string[] bulletNames = new string[] {"GunBullet"};
+    public Dictionary<string, Object> prefabs = new Dictionary<string, Object>();
+    public Dictionary<string, Queue<Bullet>> pool = new Dictionary<string, Queue<Bullet>>();
+    #endregion
 
-    void Start () {
-		instance = this;
-	}
+    #region Initialization
+    private BulletsManager() {
+        foreach (string bulletName in bulletNames) {
+            prefabs[bulletName] = Resources.Load(bulletName);
+            AddBulletType(bulletName, prefabs[bulletName]);
+        }
+    }
     #endregion
 
     #region Methods
-    public void AddBulletType(string weapon, Bullet bulletPrefab) {
+    public void AddBulletType(string type, Object bulletPrefab) {
 		// We create a pool of bullets
 		Queue<Bullet> queue = new Queue<Bullet>();
 		Bullet bullet;
-		for (int i = 0; i < instance.poolSize; i++) {
-			bullet = (Bullet)Instantiate(bulletPrefab);
-			bullet.weapon = weapon;
+		for (int i = 0; i < poolSize; i++) {
+            bullet = (Bullet)((GameObject)Object.Instantiate(bulletPrefab)).GetComponent(type);
 			queue.Enqueue(bullet);
 		}
-		pool[weapon] = queue;
+        pool[type] = queue;
 	}
 
-	public Bullet GetBullet(string weapon) {
-		return pool[weapon].Dequeue();
+    public Bullet GetBullet(string type) {
+        Bullet bullet;
+        if (pool[type].Count == 0) {
+            Object weaponPrefab = GetBulletPrefab(type);
+            bullet = (Bullet)((GameObject)Object.Instantiate(weaponPrefab)).GetComponent(type);
+            pool[type].Enqueue(bullet);
+        }
+        bullet = pool[type].Dequeue();
+        bullet.Init();
+        return bullet;
 	}
+
+    public Object GetBulletPrefab(string type) {
+        return Object.Instantiate(prefabs[type]);
+    }
     #endregion
 
 }
