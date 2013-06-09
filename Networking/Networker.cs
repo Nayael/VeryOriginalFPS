@@ -25,6 +25,8 @@ public class Networker : MonoBehaviour
     public List<Transform> prefabValues;
     public List<NetworkPlayer> players = new List<NetworkPlayer>();
     public Dictionary<NetworkPlayer, Unit> playerScripts = new Dictionary<NetworkPlayer, Unit>();
+    public Texture crosshairTexture;
+    public Texture crosshairFireTexture;
     #endregion
 
     #region Initialization
@@ -73,9 +75,16 @@ public class Networker : MonoBehaviour
                 DisconnectFromServer();
             }
             if (GameObject.FindGameObjectWithTag("Player") != null) {
+                GUI.contentColor = Color.black;
+
                 GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-                GUI.Label(new Rect(0, 20, 80, 30), " Frags : " + playerGO.GetComponent<Shooter>().frags.ToString());
-                GUI.Label(new Rect(0, 40, 130, 30), " Deaths : " + playerGO.GetComponent<Shooter>().deaths.ToString());
+                Shooter shooterScript = playerGO.GetComponent<Shooter>();
+
+                Rect position = new Rect((Screen.width - crosshairTexture.width) / 2, (Screen.height - crosshairTexture.height) / 2, crosshairTexture.width, crosshairTexture.height);
+                GUI.DrawTexture(position, (Input.GetButton("Fire1") && shooterScript.Weapon.Ammo > 0) ? crosshairFireTexture : crosshairTexture);
+
+                GUI.Label(new Rect(0, 20, 80, 30), " Frags : " + shooterScript.frags.ToString());
+                GUI.Label(new Rect(0, 40, 130, 30), " Deaths : " + shooterScript.deaths.ToString());
                 GUI.Label(new Rect(0, Screen.height - 20, 80, 20), " + " + playerGO.GetComponent<Unit>().health.Current.ToString());
 
                 if (playerGO.GetComponent<Shooter>().Weapon != null) {
@@ -251,72 +260,3 @@ public class Networker : MonoBehaviour
     #endregion
 
 }
-
-//public class Spawner : MonoBehaviour {
-
-//    public Transform playerPrefab;
-//    public ArrayList playerScripts = new ArrayList();
-
-//    void OnGUI()
-//    {
-//        var posGUI = 0;
-//        foreach (PlayerController script in playerScripts)
-//        {
-//            GUI.Label(new Rect(Screen.width - 300, 30 * posGUI, 300, 20), script.theOwner + " has " + script.hp.ToString());
-//            posGUI++;
-//        }
-
-//    }
-
-//    void OnServerInitialized()
-//    {
-//        SpawnPlayer(Network.player);
-//    }
-
-//    void OnPlayerConnected(NetworkPlayer player)
-//    {
-//        SpawnPlayer(player);
-//    }
-
-//    void OnPlayerDisconnected(NetworkPlayer player) 
-//    {
-//        UnSpawnPlayer(player);
-//    }
-
-//    //Le serveur a été détruit alors nous ne nous embêtons pas avec les objets présents : on les vire tous !
-//    void OnDisconnectedFromServer(NetworkDisconnection info)
-//    {
-//        Application.LoadLevel(Application.loadedLevel);
-//    }
-
-//    void SpawnPlayer(NetworkPlayer player)
-//    {
-//        string tempPlayerString = player.ToString();
-//        int playerNumber = int.Parse(tempPlayerString);
-//        Transform newPlayerTransform = (Transform)Network.Instantiate(playerPrefab, transform.position, transform.rotation, playerNumber);
-
-//        playerScripts.Add(newPlayerTransform.GetComponent("PlayerController"));
-//        NetworkView theNetworkView = newPlayerTransform.networkView;
-//        theNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
-//    }
-
-//    void UnSpawnPlayer(NetworkPlayer player)
-//    {
-//        foreach (PlayerController script in playerScripts)
-//        {
-//            if (player == script.theOwner)
-//            {
-//                Network.RemoveRPCs(script.gameObject.networkView.viewID);
-//                Network.Destroy(script.gameObject);
-//                playerScripts.Remove(script);
-//                break;
-//            }
-//        }
-
-//        var playerNumber = int.Parse(player + "");
-//        Network.RemoveRPCs(Network.player, playerNumber);
-
-//        Network.RemoveRPCs(player);
-//        Network.DestroyPlayerObjects(player);
-//    }
-//}
