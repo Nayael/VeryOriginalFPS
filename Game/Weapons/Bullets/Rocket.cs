@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class GunBullet : Bullet
+public class Rocket : Bullet
 {
 	
     #region Update

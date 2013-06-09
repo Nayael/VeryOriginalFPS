@@ -19,18 +19,18 @@ public sealed class WeaponManager
     #endregion
 
     #region Public Members
+    public string[] weaponNames = new string[] { "RocketLauncher", "Gun" };
     public int poolSize = 3;
     public Dictionary<string, Object> prefabs = new Dictionary<string, Object>();
     public Dictionary<string, Queue<AWeapon>> pool = new Dictionary<string, Queue<AWeapon>>();
     #endregion
 
-    #region Properties
-    #endregion
-
     #region Initialization
     private WeaponManager() {
-        prefabs["Gun"] = Resources.Load("Gun");
-        AddAWeaponType("Gun", prefabs["Gun"]);
+        foreach (string weaponName in weaponNames) {
+            prefabs[weaponName] = Resources.Load(weaponName);
+            AddAWeaponType(weaponName, prefabs[weaponName]);
+        }
     }
     #endregion
 

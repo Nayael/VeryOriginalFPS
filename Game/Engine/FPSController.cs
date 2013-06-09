@@ -14,6 +14,7 @@ class FPSController : MonoBehaviour
     private bool grounded;
     private Vector3 moveDirection = Vector3.zero;
     private Camera fpsCam;
+    private bool mouseVisible = false;
     #endregion
 
     #region Public Members
@@ -35,6 +36,15 @@ class FPSController : MonoBehaviour
     #region Properties
     public Camera FPSCamera {
         get { return fpsCam; }
+    }
+
+    public bool MouseVisible {
+        get { return mouseVisible; }
+        set {
+            mouseVisible = value;
+            Screen.lockCursor = !mouseVisible;
+            Screen.showCursor = mouseVisible;
+        }
     }
     #endregion
 
@@ -60,6 +70,13 @@ class FPSController : MonoBehaviour
     #endregion
 
     #region Update
+    void Update() {
+        // TAB key is used to unlock the mouse
+        if (Input.GetKeyDown(KeyCode.Tab)) {
+            MouseVisible = !MouseVisible;
+        }
+    }
+
     void FixedUpdate() {
         CharacterController controller = GetComponent<CharacterController>();
 
@@ -262,6 +279,7 @@ class FPSController : MonoBehaviour
             Camera.main.enabled = false;
             if (GetComponent<Shooter>() != null) {
                 GetComponent<Shooter>().enabled = true;
+                MouseVisible = false;
             }
         }
         SetCamera(player);

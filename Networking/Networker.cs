@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using FPS.Game.Managers;
-
 public class Networker : MonoBehaviour
 {
 
@@ -186,7 +184,6 @@ public class Networker : MonoBehaviour
         NetworkView playerNetworkView = newPlayerTransform.networkView;
         playerNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
         playerNetworkView.RPC("TakeWeapon", player, "Gun");             // Give the player a default weapon
-        //newPlayerTransform.GetComponent<Shooter>().TakeWeapon("Gun");
     }
 
     // Makes a player respawn

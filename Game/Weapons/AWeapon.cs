@@ -50,7 +50,6 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
 
     public virtual void Shoot(Vector3 position, Vector3 direction) {
         Ammo--;
-        //Debug.Log("Shoot " + bulletType);
     }
     #endregion
 

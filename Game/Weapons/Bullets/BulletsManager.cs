@@ -17,7 +17,7 @@ public class BulletsManager
 
     #region Public Members
 	public int poolSize = 50;
-    public string[] bulletNames = new string[] {"GunBullet"};
+    public string[] bulletNames = new string[] {"Rocket"};
     public Dictionary<string, Object> prefabs = new Dictionary<string, Object>();
     public Dictionary<string, Queue<Bullet>> pool = new Dictionary<string, Queue<Bullet>>();
     #endregion
