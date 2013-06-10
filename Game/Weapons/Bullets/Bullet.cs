@@ -22,7 +22,7 @@ abstract public class Bullet : MonoBehaviour
 
     public void Init() {
         enabled = false;
-        gameObject.active = false;
+        gameObject.SetActiveRecursively(false);
         _direction = Vector3.zero;
         health.Fill();
     }
@@ -39,11 +39,10 @@ abstract public class Bullet : MonoBehaviour
 
     #region Methods
     public void Fire(Unit owner, Vector3 position) {
-        Debug.Log("_direction " + _direction);
         transform.parent = null;
         transform.position = position;
         transform.LookAt(_direction);
-        gameObject.active = true;
+        gameObject.SetActiveRecursively(true);
         enabled = true;
 	}
 
@@ -54,7 +53,7 @@ abstract public class Bullet : MonoBehaviour
 
 	public void Destroy() {
 		enabled = false;
-		gameObject.active = false;
+		gameObject.SetActiveRecursively(false);
         _direction = Vector3.zero;
         BulletsManager.Instance.pool[GetType().ToString()].Enqueue(this);	// We put it back in the pool
 	}
