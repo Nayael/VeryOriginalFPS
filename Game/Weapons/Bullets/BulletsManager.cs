@@ -46,8 +46,8 @@ public class BulletsManager
     public Bullet GetBullet(string type) {
         Bullet bullet;
         if (pool[type].Count == 0) {
-            Object weaponPrefab = GetBulletPrefab(type);
-            bullet = (Bullet)((GameObject)Object.Instantiate(weaponPrefab)).GetComponent(type);
+            Object bulletPrefab = GetBulletPrefab(type);
+            bullet = (Bullet)((GameObject)Object.Instantiate(bulletPrefab)).GetComponent(type);
             pool[type].Enqueue(bullet);
         }
         bullet = pool[type].Dequeue();

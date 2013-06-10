@@ -6,8 +6,7 @@ public class Rocket : Bullet
 	
     #region Update
 	void FixedUpdate () {
-        //Debug.Log(_direction);
-		transform.Translate(Vector3.forward * (1f / weight) * Time.deltaTime);
+        transform.Translate(transform.forward * (1f / weight) * Time.deltaTime, Space.World);
     }
     #endregion
 

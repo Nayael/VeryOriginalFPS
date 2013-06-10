@@ -39,9 +39,10 @@ abstract public class Bullet : MonoBehaviour
 
     #region Methods
     public void Fire(Unit owner, Vector3 position) {
+        Debug.Log("_direction " + _direction);
         transform.parent = null;
-        transform.LookAt(_direction);
         transform.position = position;
+        transform.LookAt(_direction);
         gameObject.active = true;
         enabled = true;
 	}
@@ -54,7 +55,8 @@ abstract public class Bullet : MonoBehaviour
 	public void Destroy() {
 		enabled = false;
 		gameObject.active = false;
-		BulletsManager.Instance.pool[GetType().ToString()].Enqueue(this);	// We put it back in the pool
+        _direction = Vector3.zero;
+        BulletsManager.Instance.pool[GetType().ToString()].Enqueue(this);	// We put it back in the pool
 	}
 
 	protected void GameOver () {

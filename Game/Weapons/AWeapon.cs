@@ -15,7 +15,7 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
 	
     #region Protected Members
     protected int _cooldown = 0;
-    protected int _ammo = 0;
+    protected int _ammo = 0;    
     #endregion
 
     #region Properties
