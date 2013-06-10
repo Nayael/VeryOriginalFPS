@@ -6,13 +6,17 @@ using UnityEngine;
 class FPSController : MonoBehaviour
 {
     #region Private Members
-    private Dictionary<string, float> lastClientInput = new Dictionary<string, float>();
-    private Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
+    //private Dictionary<string, float> lastClientInput = new Dictionary<string, float>();
+    //private Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
     //private List<ArrayList> predictedMoves = new List<ArrayList>();
     //private int serverCurrentInputID; // The ID of the currently treated inputs on the server
 
     private bool grounded;
+
     private Vector3 moveDirection = Vector3.zero;
+    private float hRotAngle = 0f;
+    private float camVRotAngle = 0f;
+
     private Camera fpsCam;
     private bool mouseVisible = false;
     #endregion
@@ -38,6 +42,10 @@ class FPSController : MonoBehaviour
         get { return fpsCam; }
     }
 
+    public Vector3 MoveDirection {
+        get { return moveDirection; }
+    }
+
     public bool MouseVisible {
         get { return mouseVisible; }
         set {
@@ -55,17 +63,17 @@ class FPSController : MonoBehaviour
             enabled = false;
         }
 
-        lastClientInput.Add("Horizontal", 0f);
-        lastClientInput.Add("Vertical", 0f);
-        lastClientInput.Add("Jump", 0f);
-        lastClientInput.Add("Mouse X", 0f);
-        lastClientInput.Add("Mouse Y", 0f);
+        //lastClientInput.Add("Horizontal", 0f);
+        //lastClientInput.Add("Vertical", 0f);
+        //lastClientInput.Add("Jump", 0f);
+        //lastClientInput.Add("Mouse X", 0f);
+        //lastClientInput.Add("Mouse Y", 0f);
 
-        serverCurrentInput.Add("Horizontal", 0f);
-        serverCurrentInput.Add("Vertical", 0f);
-        serverCurrentInput.Add("Jump", 0f);
-        serverCurrentInput.Add("Mouse X", 0f);
-        serverCurrentInput.Add("Mouse Y", 0f);
+        //serverCurrentInput.Add("Horizontal", 0f);
+        //serverCurrentInput.Add("Vertical", 0f);
+        //serverCurrentInput.Add("Jump", 0f);
+        //serverCurrentInput.Add("Mouse X", 0f);
+        //serverCurrentInput.Add("Mouse Y", 0f);
     }
     #endregion
 
@@ -80,76 +88,37 @@ class FPSController : MonoBehaviour
     void FixedUpdate() {
         CharacterController controller = GetComponent<CharacterController>();
 
-        // Get the inputs only if we are the owner
+        // If we are the owner
         if (Network.player == owner) {
-            Dictionary<string, float> currentClientInput = new Dictionary<string, float>();
-            Vector3 moveInput = Vector3.zero;
-            Vector3 mouseInput = Vector3.zero;
+            Dictionary<string, float> userInput = new Dictionary<string, float>();
 
-            currentClientInput.Add("Horizontal", Input.GetAxis("Horizontal"));
-            currentClientInput.Add("Vertical", Input.GetAxis("Vertical"));
-            currentClientInput.Add("Jump", Input.GetAxis("Jump"));
-            currentClientInput.Add("Mouse X", Input.GetAxis("Mouse X"));
-            currentClientInput.Add("Mouse Y", Input.GetAxis("Mouse Y"));
+            userInput.Add("Horizontal", Input.GetAxis("Horizontal"));
+            userInput.Add("Vertical", Input.GetAxis("Vertical"));
+            userInput.Add("Jump", Input.GetAxis("Jump"));
+            userInput.Add("Mouse X", Input.GetAxis("Mouse X"));
+            userInput.Add("Mouse Y", Input.GetAxis("Mouse Y"));
 
-            // If the input has changed since the last time
-            if (lastClientInput["Horizontal"] != currentClientInput["Horizontal"] || lastClientInput["Vertical"] != currentClientInput["Vertical"] || lastClientInput["Jump"] != currentClientInput["Jump"]) {
-                // We keep the new input as the last input
-                lastClientInput["Horizontal"] = currentClientInput["Horizontal"];
-                lastClientInput["Vertical"] = currentClientInput["Vertical"];
-                lastClientInput["Jump"] = currentClientInput["Jump"];
-
-                moveInput = new Vector3 (
-                    currentClientInput["Horizontal"],
-                    currentClientInput["Vertical"],
-                    currentClientInput["Jump"]
-                );
-                networkView.RPC("SendMovementInput", RPCMode.Server, moveInput);
-                //Debug.Log("Send inputs " + predictedMoves.Count + " : " + moveInput);
-            }
-
-            // If the mouse has moved
-            if (currentClientInput["Mouse X"] != lastClientInput["Mouse X"] || currentClientInput["Mouse Y"] != lastClientInput["Mouse Y"]) {
-                // We keep the new input as the last input
-                lastClientInput["Mouse X"] = currentClientInput["Mouse X"];
-                lastClientInput["Mouse Y"] = currentClientInput["Mouse Y"];
-
-                mouseInput = new Vector3 (
-                    currentClientInput["Mouse X"],
-                    currentClientInput["Mouse Y"],
-                    0f
-                );
-                networkView.RPC("SendMouseInput", RPCMode.Server, mouseInput);
-            }
-        }
-
-        // The movements are done on the server, predicted on the client
-        if (Network.isServer || Network.player == owner) {
-            Dictionary<string, float> userInput = Network.isServer ? serverCurrentInput : lastClientInput;
-            //if (Network.isServer) {
-            //    Debug.Log("Process inputs " + serverCurrentInputID + " : " + userInput["Horizontal"] + " | " + userInput["Vertical"] + " | " + userInput["Jump"]);
-            //}
             if (grounded) {
-                moveDirection = new Vector3(userInput["Horizontal"], 0, userInput["Vertical"]);
+                moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
                 moveDirection = transform.TransformDirection(moveDirection);
                 moveDirection *= speed;
                 if (userInput["Jump"] != 0f) {
                     moveDirection.y = jumpSpeed;
                 }
             } else if (airControl) {
-                moveDirection.x = userInput["Horizontal"] * speed;
-                moveDirection.z = userInput["Vertical"] * speed;
+                moveDirection.x = Input.GetAxis("Horizontal") * speed;
+                moveDirection.z = Input.GetAxis("Vertical") * speed;
                 moveDirection = transform.TransformDirection(moveDirection);
             }
+            Debug.Log(moveDirection * Time.deltaTime);
 
             // Apply gravity
             moveDirection.y -= gravity * Time.deltaTime;
-
             // Move the controller
             grounded = (controller.Move(moveDirection * Time.deltaTime) & CollisionFlags.Below) != 0;
 
             // Mouse movement
-            float sideTurn = angularSpeed * userInput["Mouse X"] * mouseSensitivity.x * Time.deltaTime;
+            /*float sideTurn = angularSpeed * userInput["Mouse X"] * mouseSensitivity.x * Time.deltaTime;
             float verticalTurn = -1 * userInput["Mouse Y"] * mouseSensitivity.y * Time.deltaTime;
 
             // Vertical rotation
@@ -167,22 +136,13 @@ class FPSController : MonoBehaviour
             }
 
             // Side Rotation
-            transform.RotateAroundLocal(Vector3.up, sideTurn);
-
-            // On the client side, keep track of the predicted moves
-            //if (Network.player == owner) {
-            //    ArrayList prediction = new ArrayList();
-            //    prediction.Add(transform.position);
-            //    prediction.Add(transform.rotation);
-            //    prediction.Add(fpsCam.transform.localRotation);
-            //    predictedMoves.Add(prediction);
-            //}
+            transform.RotateAroundLocal(Vector3.up, sideTurn);*/
         }
     }
     #endregion
 
     #region Networking
-    void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
+    /*void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
 
         // Writing data (on the server)
         if (stream.isWriting) {
@@ -267,7 +227,7 @@ class FPSController : MonoBehaviour
                 transform.rotation = rotReceive;
             }
         }
-    }
+    }*/
     #endregion
 
     #region RPC
@@ -309,21 +269,6 @@ class FPSController : MonoBehaviour
         if (Network.isServer) {
             transform.position = correctedPosition;
         }
-    }
-
-    [RPC]
-    void SendMovementInput(/*int inputID, */Vector3 clientInput) {
-        //serverCurrentInputID = inputID;
-        serverCurrentInput["Horizontal"] = clientInput.x;
-        serverCurrentInput["Vertical"] = clientInput.y;
-        serverCurrentInput["Jump"] = clientInput.z;
-    }
-
-    [RPC]
-    void SendMouseInput(/*int inputID, */Vector3 clientInput) {
-        //serverCurrentInputID = inputID;
-        serverCurrentInput["Mouse X"] = clientInput.x;
-        serverCurrentInput["Mouse Y"] = clientInput.y;
     }
     #endregion
 }

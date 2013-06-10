@@ -7,7 +7,8 @@ abstract public class Bullet : MonoBehaviour
     #region Public Members
     public Health health;	    // Every bullet has a health points count
 	public float weight;		// The bullet's weight (defines its speed)
-	public float strength;		// The bullet's strength (damages it causes)
+    public float strength;		// The bullet's strength (damages it causes)
+    public AWeapon weapon;
     #endregion
 
     #region Protected Members
