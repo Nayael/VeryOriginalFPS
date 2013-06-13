@@ -6,18 +6,10 @@ using UnityEngine;
 class FPSController : MonoBehaviour
 {
     #region Private Members
-    //private Dictionary<string, float> lastClientInput = new Dictionary<string, float>();
-    //private Dictionary<string, float> serverCurrentInput = new Dictionary<string, float>();
-    //private List<ArrayList> predictedMoves = new List<ArrayList>();
-    //private int serverCurrentInputID; // The ID of the currently treated inputs on the server
-
     private bool grounded;
-
     private Vector3 moveDirection = Vector3.zero;
     private float hRotAngle = 0f;
-    private float camVRotAngle = 0f;
 
-    private Camera fpsCam;
     private bool mouseVisible = false;
     #endregion
 
@@ -31,17 +23,12 @@ class FPSController : MonoBehaviour
     public float speed = 40f;
     public float jumpSpeed = 20f;
     public float angularSpeed = 20f;
-    public float maxVerticalAngle = 0.5f;
     public float gravity = 100.0f;
     public bool airControl = true;
     public Vector2 mouseSensitivity = new Vector2(1f, 100f);
     #endregion
 
     #region Properties
-    public Camera FPSCamera {
-        get { return fpsCam; }
-    }
-
     public Vector3 MoveDirection {
         get { return moveDirection; }
     }
@@ -62,18 +49,6 @@ class FPSController : MonoBehaviour
         if (Network.isClient) {
             enabled = false;
         }
-
-        //lastClientInput.Add("Horizontal", 0f);
-        //lastClientInput.Add("Vertical", 0f);
-        //lastClientInput.Add("Jump", 0f);
-        //lastClientInput.Add("Mouse X", 0f);
-        //lastClientInput.Add("Mouse Y", 0f);
-
-        //serverCurrentInput.Add("Horizontal", 0f);
-        //serverCurrentInput.Add("Vertical", 0f);
-        //serverCurrentInput.Add("Jump", 0f);
-        //serverCurrentInput.Add("Mouse X", 0f);
-        //serverCurrentInput.Add("Mouse Y", 0f);
     }
     #endregion
 
@@ -90,19 +65,12 @@ class FPSController : MonoBehaviour
 
         // If we are the owner
         if (Network.player == owner) {
-            Dictionary<string, float> userInput = new Dictionary<string, float>();
-
-            userInput.Add("Horizontal", Input.GetAxis("Horizontal"));
-            userInput.Add("Vertical", Input.GetAxis("Vertical"));
-            userInput.Add("Jump", Input.GetAxis("Jump"));
-            userInput.Add("Mouse X", Input.GetAxis("Mouse X"));
-            userInput.Add("Mouse Y", Input.GetAxis("Mouse Y"));
-
+            /* Character translation */
             if (grounded) {
                 moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
                 moveDirection = transform.TransformDirection(moveDirection);
                 moveDirection *= speed;
-                if (userInput["Jump"] != 0f) {
+                if (Input.GetAxis("Jump") != 0f) {
                     moveDirection.y = jumpSpeed;
                 }
             } else if (airControl) {
@@ -110,164 +78,94 @@ class FPSController : MonoBehaviour
                 moveDirection.z = Input.GetAxis("Vertical") * speed;
                 moveDirection = transform.TransformDirection(moveDirection);
             }
-            Debug.Log(moveDirection * Time.deltaTime);
 
             // Apply gravity
             moveDirection.y -= gravity * Time.deltaTime;
-            // Move the controller
-            grounded = (controller.Move(moveDirection * Time.deltaTime) & CollisionFlags.Below) != 0;
 
-            // Mouse movement
-            /*float sideTurn = angularSpeed * userInput["Mouse X"] * mouseSensitivity.x * Time.deltaTime;
-            float verticalTurn = -1 * userInput["Mouse Y"] * mouseSensitivity.y * Time.deltaTime;
+            /* Character rotation */
+            hRotAngle = angularSpeed * Input.GetAxis("Mouse X") * mouseSensitivity.x * Time.deltaTime;
 
-            // Vertical rotation
-            fpsCam.transform.Rotate(verticalTurn, 0f, 0f);
-
-            // Capping the vertical rotation of the camera
-            if (fpsCam.transform.localRotation.x < -maxVerticalAngle) {
-                Quaternion correctRot = fpsCam.camera.transform.localRotation;
-                correctRot.x = -maxVerticalAngle;
-                fpsCam.camera.transform.localRotation = correctRot;
-            } else if (fpsCam.transform.localRotation.x > maxVerticalAngle) {
-                Quaternion correctRot = fpsCam.camera.transform.localRotation;
-                correctRot.x = maxVerticalAngle;
-                fpsCam.camera.transform.localRotation = correctRot;
-            }
-
-            // Side Rotation
-            transform.RotateAroundLocal(Vector3.up, sideTurn);*/
+            networkView.RPC("SendPlayerMovement", RPCMode.Server, moveDirection, hRotAngle);
+        } else {
+            Debug.Log(moveDirection);
         }
+
+        // Apply the translation & rotation
+        grounded = (controller.Move(moveDirection * Time.deltaTime) & CollisionFlags.Below) != 0;
+        transform.RotateAroundLocal(Vector3.up, hRotAngle);
     }
     #endregion
 
     #region Networking
-    /*void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
+    void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
+
+        Vector3 moveDirection = Vector3.zero;
+        float hRotAngle = 0f;
+        Vector3 pos = transform.position;
+        Quaternion rot = transform.localRotation;
 
         // Writing data (on the server)
         if (stream.isWriting) {
-            Vector3 pos = transform.localPosition;
-            Quaternion rot = transform.rotation;
-            Quaternion camRot = fpsCam.transform.localRotation;
-
-            //stream.Serialize(ref serverCurrentInputID);
+            stream.Serialize(ref this.moveDirection);
+            stream.Serialize(ref this.hRotAngle);
             stream.Serialize(ref pos);
             stream.Serialize(ref rot);
-            stream.Serialize(ref camRot);
-
+            
         // Receiving data (on the clients)
         } else {
-            Vector3 posReceive = Vector3.zero;
-            Quaternion rotReceive = Quaternion.identity;
-            Quaternion camRotReceive = Quaternion.identity;
+            stream.Serialize(ref moveDirection);
+            stream.Serialize(ref hRotAngle);
+            stream.Serialize(ref pos);
+            stream.Serialize(ref rot);
 
-            //stream.Serialize(ref serverCurrentInputID);
-            stream.Serialize(ref posReceive);
-            stream.Serialize(ref rotReceive);
-            stream.Serialize(ref camRotReceive);
-
-            // If I am the owner, I am the one who made the prediction
-            if (Network.player == owner) {
-
-                // First, retrieve the predicted moves corresponding to the received input from the server
-                //ArrayList predictedMove = predictedMoves[serverCurrentInputID];
-                //predictedMoves.RemoveAt(serverCurrentInputID);
-
-                //Vector3 predictedPos = (Vector3)predictedMove[0];
-                //Quaternion predictedRot = (Quaternion)predictedMove[1];
-                //Quaternion predictedCamRot = (Quaternion)predictedMove[2];
-                Vector3 predictedPos = transform.localPosition;
-                Quaternion predictedRot = transform.rotation;
-                Quaternion predictedCamRot = fpsCam.transform.localRotation;
-
-                //Debug.Log("recieve " + posReceive);
-                //Debug.Log("predicted " + predictedPos);
-
-                // Then calculate the difference between the predicted values and the recieved values
-                Vector3 diffPos = posReceive - predictedPos;
-                Quaternion diffRot = new Quaternion(
-                    Mathf.Abs(rotReceive.x - predictedRot.x),
-                    Mathf.Abs(rotReceive.y - predictedRot.y),
-                    Mathf.Abs(rotReceive.z - predictedRot.z),
-                    Mathf.Abs(rotReceive.w - predictedRot.w)
-                );
-                Quaternion diffCamRot = new Quaternion(
-                    Mathf.Abs(camRotReceive.x - predictedCamRot.x),
-                    Mathf.Abs(camRotReceive.y - predictedCamRot.y),
-                    Mathf.Abs(camRotReceive.z - predictedCamRot.z),
-                    Mathf.Abs(camRotReceive.w - predictedCamRot.w)
-                );
-
-                // If the difference is too big, correct the values on the client side (use average to smooth)
-                //Debug.Log(acceptableError);
-                //Debug.Log(diffPos);
-                if (Mathf.Abs(diffPos.x) > acceptableError
-                    || Mathf.Abs(diffPos.y) > acceptableError
-                    || Mathf.Abs(diffPos.z) > acceptableError) {
-                        //GetComponent<CharacterController>().Move(diffPos);
-                        transform.localPosition = posReceive;
-                        //networkView.RPC("SendCorrectedPosition", RPCMode.Server, transform.position);
-                }
-                if (diffRot.x > acceptableRotError
-                    || diffRot.y > acceptableRotError
-                    || diffRot.z > acceptableRotError
-                    || diffRot.w > acceptableRotError) {
-                        transform.rotation = rotReceive;
-                }
-                if (diffCamRot.x > acceptableRotError
-                    || diffCamRot.y > acceptableRotError
-                    || diffCamRot.z > acceptableRotError
-                    || diffCamRot.w > acceptableRotError) {
-                        fpsCam.transform.localRotation = camRotReceive;
-                }
-
-            // Otherwise, if I am not the owner, just update with the server's data
+            if (Network.player != owner) {
+                this.moveDirection = moveDirection;
+                this.hRotAngle = hRotAngle;
+                this.transform.position = pos;
+                this.transform.localRotation = rot;
             } else {
-                transform.position = posReceive;
-                transform.rotation = rotReceive;
+                if (Vector3.Distance(this.transform.position, pos) > acceptableError) {
+                    this.transform.position = Vector3.Lerp(this.transform.position, pos, 0.25f);
+                }
+
+                if (Quaternion.Angle(this.transform.localRotation, rot) > acceptableRotError) {
+                    this.transform.localRotation = Quaternion.Lerp(this.transform.localRotation, rot, 0.25f);
+                }
             }
         }
-    }*/
+    }
     #endregion
 
     #region RPC
     [RPC]
     void SetPlayer(NetworkPlayer player) {
         owner = player;
-        if (player == Network.player) {
-            enabled = true;
-            gameObject.tag = "Player";
-            Camera.main.enabled = false;
+
+        // If we are the owner
+        if (owner == Network.player) {
+            this.enabled = true;    // Enable me
+            this.gameObject.tag = "Player";
+
             if (GetComponent<Shooter>() != null) {
                 GetComponent<Shooter>().enabled = true;
+                GetComponent<Shooter>().owner = this.owner;
                 MouseVisible = false;
             }
+
+            // Use a FPSCamera
+            Camera.main.enabled = false;    // Disable the main camera
+            Transform fpsCam = (Transform)Instantiate(cameraPrefab);
+            fpsCam.parent = this.transform;
+            fpsCam.localPosition = new Vector3(0f, 0.025f, 0.26f);
+            fpsCam.GetComponent<FPSCamera>().MouseYSensitivity = this.mouseSensitivity.y;
         }
-        SetCamera(player);
     }
 
     [RPC]
-    public void SetCamera(NetworkPlayer player) {
-        Vector3 camPos = new Vector3(0f, 0.025f, 0.26f);
-        Quaternion camRot = Quaternion.identity;
-
-        if (player == Network.player) {
-            fpsCam = GameObject.Find("FPSCamera").camera;
-            fpsCam.transform.parent = this.transform;
-            fpsCam.enabled = true;
-        } else {
-            fpsCam = ((Transform)Instantiate(cameraPrefab, camPos, camRot)).camera;
-            fpsCam.transform.parent = this.transform;
-            fpsCam.enabled = false;
-        }
-        fpsCam.transform.localPosition = camPos;
-        fpsCam.transform.localRotation = camRot;
-    }
-
-    [RPC]
-    void SendCorrectedPosition(Vector3 correctedPosition) {
+    void SendPlayerMovement(Vector3 move, float hRotation) {
         if (Network.isServer) {
-            transform.position = correctedPosition;
+            moveDirection = move;
+            hRotAngle = hRotation;
         }
     }
     #endregion

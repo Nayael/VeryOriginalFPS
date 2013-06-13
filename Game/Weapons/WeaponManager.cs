@@ -29,18 +29,18 @@ public sealed class WeaponManager
     private WeaponManager() {
         foreach (string weaponName in weaponNames) {
             prefabs[weaponName] = Resources.Load(weaponName);
-            AddAWeaponType(weaponName, prefabs[weaponName]);
+            AddAWeaponType(weaponName);
         }
     }
     #endregion
 
     #region Methods
-    public void AddAWeaponType(string type, Object weaponPrefab) {
+    public void AddAWeaponType(string type) {
 		// We create a pool of AWeapon
 		Queue<AWeapon> queue = new Queue<AWeapon>();
         AWeapon weapon;
 		for (int i = 0; i < poolSize; i++) {
-            weapon = (AWeapon)( (GameObject)Object.Instantiate(weaponPrefab) ).GetComponent(type);
+            weapon = GetWeaponInstance(type);
             queue.Enqueue(weapon);
 		}
 		pool[type] = queue;
@@ -48,9 +48,9 @@ public sealed class WeaponManager
 
     public AWeapon GetWeapon(string type) {
         AWeapon weapon;
+        // If there is no instance available on the pool, we create another one
         if (pool[type].Count == 0) {
-            Object weaponPrefab = GetWeaponPrefab(type);
-            weapon = (AWeapon)((GameObject)Object.Instantiate(weaponPrefab)).GetComponent(type);
+            weapon = GetWeaponInstance(type);
             pool[type].Enqueue(weapon);
         }
         weapon = pool[type].Dequeue();
@@ -58,8 +58,10 @@ public sealed class WeaponManager
         return weapon;
 	}
 
-    public Object GetWeaponPrefab(string type) {
-        return Object.Instantiate(prefabs[type]);
+    public AWeapon GetWeaponInstance(string type) {
+        AWeapon weapon = (AWeapon)((GameObject)Network.Instantiate(
+            prefabs[type], Vector3.zero, Quaternion.identity, 0)).GetComponent(type);
+        return weapon;
     }
     #endregion
 

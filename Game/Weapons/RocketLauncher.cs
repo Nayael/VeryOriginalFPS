@@ -18,7 +18,7 @@ public class RocketLauncher : AWeapon, IWeapon
             return;
         }
 
-        Camera fpsCam = owner.GetComponent<FPSController>().FPSCamera;
+        Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
         Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 		RaycastHit hit;
         Vector3 destination = Vector3.zero;
@@ -36,7 +36,6 @@ public class RocketLauncher : AWeapon, IWeapon
             // Otherwise, the player was aiming at the void (the sky for example), so make the bullet go to a point very very far
             destination = fpsCam.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 999999999999f));    // Look at the point to infinity (hard coded value, because it's impossible to use Mathf.Infinity for LookAt)
         }
-
         base.Shoot(destination);
     }
 

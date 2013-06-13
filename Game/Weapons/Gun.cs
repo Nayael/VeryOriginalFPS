@@ -24,7 +24,7 @@ public class Gun : AWeapon, IWeapon
         _cooldown = baseCooldown;
         Ammo--;
 
-        Camera fpsCam = owner.GetComponent<FPSController>().FPSCamera;
+        Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
         Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 		RaycastHit hit;
 
@@ -38,7 +38,7 @@ public class Gun : AWeapon, IWeapon
 
     // Checks if the gun can hit a given target
     override public bool CanHit(Unit unit) {
-        Camera fpsCam = owner.GetComponent<FPSController>().FPSCamera;
+        Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
         Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 		RaycastHit hit;
 

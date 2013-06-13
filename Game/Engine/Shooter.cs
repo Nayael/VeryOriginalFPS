@@ -17,6 +17,7 @@ public class Shooter : MonoBehaviour
     public bool autoEquip = true;
     public int frags = 0;
     public int deaths = 0;
+    public NetworkPlayer owner;
     #endregion
 
     #region Properties
@@ -58,17 +59,30 @@ public class Shooter : MonoBehaviour
     void EquipWeapon(AWeapon weapon) {
         // First, we make the previous weapon invisible
         if (_weapon != null) {
-            _weapon.gameObject.active = false;
+            _weapon.gameObject.renderer.enabled = false;
             _weapon.enabled = false;
         }
 
         _weapon = weapon;
-        _weapon.gameObject.active = true;
+        _weapon.gameObject.renderer.enabled = true;
         _weapon.enabled = true;
 
-        _weapon.transform.localPosition = new Vector3(0.34f, -0.35f, 0.61f);
-        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString());
+        _weapon.transform.localPosition = new Vector3(0.29f, -0.215f, 0.61f);
+        //networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), _weapon.transform.localPosition + _weapon.transform.parent.transform.localPosition);
     }
+    #endregion
+
+    #region Network
+    void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
+        //Debug.Log(stream.isWriting);
+        //float weaponRotX = _weapon.transform.rotation.x;
+        //if (stream.isWriting) {
+        //    stream.Serialize(ref weaponRotX);
+        //} else {
+        //    stream.Serialize(ref weaponRotX);
+        //    _weapon.transform.rotation = new Quaternion(weaponRotX, _weapon.transform.rotation.y, _weapon.transform.rotation.z, _weapon.transform.rotation.w);
+        //}
+    } 
     #endregion
 
     #region RPC
@@ -78,32 +92,33 @@ public class Shooter : MonoBehaviour
     }
 
     [RPC]
-    void EquipWeaponRemote(string weaponType) {
-        // Change weapon
-        AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
+    void EquipWeaponRemote(string weaponType, Vector3 localPosition) {
+        /*AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
         _weapon = weapon;
-        _weapon.owner = GetComponent<Unit>();
-        Camera fpsCam = GetComponent<FPSController>().FPSCamera;
-        _weapon.transform.parent = fpsCam.transform;
-        _weapon.transform.localPosition = new Vector3(0.34f, -0.35f, 0.61f);
+        _weapon.owner = this.GetComponent<Unit>();
+        _weapon.transform.parent = _weapon.owner.transform;
+        _weapon.transform.position = localPosition;*/
     }
 
     [RPC]
-    public void TakeWeapon(string weaponType) {
+    public void TakeWeapon(NetworkViewID weaponViewID) {
+        if (NetworkView.Find(weaponViewID) == null) {
+            Debug.Log("No object found with networkViewID [" + weaponViewID + "]");
+            return;
+        }
+        AWeapon weapon = NetworkView.Find(weaponViewID).gameObject.GetComponent<AWeapon>();
+
         // If the weapon is already in the inventory, then don't continue
         foreach (AWeapon possessedWeapon in _weapons) {
-            if (possessedWeapon.GetType().ToString() == weaponType) {
+            if (possessedWeapon.GetType() == weapon.GetType()) {
                 return;
             }
         }
 
         // If it's a new weapon, we get one from the WeaponManager, and add it to the inventory
-        AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
-        Camera fpsCam = GetComponent<FPSController>().FPSCamera;
-        weapon.transform.parent = fpsCam.transform;
+        Transform fpsCam = GetComponentInChildren<FPSCamera>().transform;
+        weapon.transform.parent = fpsCam;
         weapon.owner = GetComponent<Unit>();
-        weapon.gameObject.active = false;
-        weapon.enabled = false;
         _weapons.Add(weapon);
 
         // Equip it if necessary

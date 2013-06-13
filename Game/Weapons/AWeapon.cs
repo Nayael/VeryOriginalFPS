@@ -36,6 +36,13 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
     #endregion
 
     #region Initialization
+    public void OnNetworkInstantiate(NetworkMessageInfo info) {
+        transform.eulerAngles = new Vector3(90f, transform.eulerAngles.y, transform.eulerAngles.z);
+        enabled = false;
+        gameObject.renderer.enabled = false;
+        Init();
+    }
+
     public void Init() {
         _ammo = baseAmmo;
     }
@@ -51,12 +58,11 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
     public virtual void Shoot(Vector3 position, Vector3 direction) {
         Ammo--;
     }
-    #endregion
-
 
     public void EndCooldown() {
         _cooldown = 0;
     }
 
     abstract public bool CanHit(Unit unit);
+    #endregion
 }
