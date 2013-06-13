@@ -58,8 +58,17 @@ public sealed class WeaponManager
         return weapon;
 	}
 
+    public void PutWeaponBack(AWeapon weapon) {
+        weapon.gameObject.SetActiveRecursively(false);
+        weapon.enabled = false;
+        Debug.Log(weapon.GetType().ToString());
+        pool[weapon.GetType().ToString()].Enqueue(weapon);
+    }
+
     public AWeapon CreateWeaponInstance(string type) {
         AWeapon weapon = (AWeapon)((GameObject)Object.Instantiate(prefabs[type])).GetComponent(type);
+        weapon.gameObject.SetActiveRecursively(false);
+        weapon.enabled = false;
         return weapon;
     }
     #endregion

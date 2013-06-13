@@ -49,6 +49,10 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
     #endregion
 
     #region Methods
+    void Update() {
+
+    }
+
     abstract public void Shoot();
 
 	public virtual void Shoot(Vector3 direction) {
