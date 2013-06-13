@@ -40,7 +40,7 @@ public sealed class WeaponManager
 		Queue<AWeapon> queue = new Queue<AWeapon>();
         AWeapon weapon;
 		for (int i = 0; i < poolSize; i++) {
-            weapon = GetWeaponInstance(type);
+            weapon = CreateWeaponInstance(type);
             queue.Enqueue(weapon);
 		}
 		pool[type] = queue;
@@ -50,7 +50,7 @@ public sealed class WeaponManager
         AWeapon weapon;
         // If there is no instance available on the pool, we create another one
         if (pool[type].Count == 0) {
-            weapon = GetWeaponInstance(type);
+            weapon = CreateWeaponInstance(type);
             pool[type].Enqueue(weapon);
         }
         weapon = pool[type].Dequeue();
@@ -58,9 +58,8 @@ public sealed class WeaponManager
         return weapon;
 	}
 
-    public AWeapon GetWeaponInstance(string type) {
-        AWeapon weapon = (AWeapon)((GameObject)Network.Instantiate(
-            prefabs[type], Vector3.zero, Quaternion.identity, 0)).GetComponent(type);
+    public AWeapon CreateWeaponInstance(string type) {
+        AWeapon weapon = (AWeapon)((GameObject)Object.Instantiate(prefabs[type])).GetComponent(type);
         return weapon;
     }
     #endregion

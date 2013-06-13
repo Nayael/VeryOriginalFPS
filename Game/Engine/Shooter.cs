@@ -64,25 +64,12 @@ public class Shooter : MonoBehaviour
         }
 
         _weapon = weapon;
-        _weapon.gameObject.renderer.enabled = true;
+        _weapon.gameObject.SetActiveRecursively(true);
         _weapon.enabled = true;
 
         _weapon.transform.localPosition = new Vector3(0.29f, -0.215f, 0.61f);
-        //networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), _weapon.transform.localPosition + _weapon.transform.parent.transform.localPosition);
+        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), _weapon.transform.position);
     }
-    #endregion
-
-    #region Network
-    void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-        //Debug.Log(stream.isWriting);
-        //float weaponRotX = _weapon.transform.rotation.x;
-        //if (stream.isWriting) {
-        //    stream.Serialize(ref weaponRotX);
-        //} else {
-        //    stream.Serialize(ref weaponRotX);
-        //    _weapon.transform.rotation = new Quaternion(weaponRotX, _weapon.transform.rotation.y, _weapon.transform.rotation.z, _weapon.transform.rotation.w);
-        //}
-    } 
     #endregion
 
     #region RPC
@@ -92,30 +79,28 @@ public class Shooter : MonoBehaviour
     }
 
     [RPC]
-    void EquipWeaponRemote(string weaponType, Vector3 localPosition) {
-        /*AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
+    /**
+     * Called when another client has equiped a weapon
+     */
+    void EquipWeaponRemote(string weaponType, Vector3 position) {
+        AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
         _weapon = weapon;
         _weapon.owner = this.GetComponent<Unit>();
+        _weapon.transform.position = position;
         _weapon.transform.parent = _weapon.owner.transform;
-        _weapon.transform.position = localPosition;*/
     }
 
     [RPC]
-    public void TakeWeapon(NetworkViewID weaponViewID) {
-        if (NetworkView.Find(weaponViewID) == null) {
-            Debug.Log("No object found with networkViewID [" + weaponViewID + "]");
-            return;
-        }
-        AWeapon weapon = NetworkView.Find(weaponViewID).gameObject.GetComponent<AWeapon>();
-
+    public void TakeWeapon(string weaponType) {
         // If the weapon is already in the inventory, then don't continue
         foreach (AWeapon possessedWeapon in _weapons) {
-            if (possessedWeapon.GetType() == weapon.GetType()) {
+            if (possessedWeapon.GetType().ToString() == weaponType) {
                 return;
             }
         }
 
         // If it's a new weapon, we get one from the WeaponManager, and add it to the inventory
+        AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
         Transform fpsCam = GetComponentInChildren<FPSCamera>().transform;
         weapon.transform.parent = fpsCam;
         weapon.owner = GetComponent<Unit>();
