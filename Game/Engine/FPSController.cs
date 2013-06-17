@@ -86,8 +86,6 @@ class FPSController : MonoBehaviour
             hRotAngle = angularSpeed * Input.GetAxis("Mouse X") * mouseSensitivity.x * Time.deltaTime;
 
             networkView.RPC("SendPlayerMovement", RPCMode.Server, moveDirection, hRotAngle);
-        } else {
-            Debug.Log(moveDirection);
         }
 
         // Apply the translation & rotation

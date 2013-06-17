@@ -52,7 +52,8 @@ public class Shooter : MonoBehaviour
         if (Input.GetButtonUp("Fire1")) {
             _weapon.EndCooldown();
         }
-	}
+        networkView.RPC("SendWeaponRotation", RPCMode.Server, _weapon.transform.rotation);
+    }
     #endregion
 
     #region Methods
@@ -75,10 +76,11 @@ public class Shooter : MonoBehaviour
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
         Quaternion weaponRot = Quaternion.identity;
         if (stream.isWriting) {
-            Debug.Log("isWriting");
-            //weaponRot = GetComponent
-        } else {
-            Debug.Log("isReading");
+            weaponRot = _weapon.transform.rotation;
+            stream.Serialize(ref weaponRot);
+        } else if (Network.player != owner) {
+            stream.Serialize(ref weaponRot);
+            _weapon.transform.rotation = weaponRot;
         }
     }
     #endregion
@@ -131,6 +133,14 @@ public class Shooter : MonoBehaviour
                 EquipWeapon(weapon);
             }
         }
+    }
+
+    [RPC]
+    void SendWeaponRotation(Quaternion rotation) {
+        if (!Network.isServer) {
+            return;
+        }
+        _weapon.transform.rotation = rotation;
     }
     #endregion
 
