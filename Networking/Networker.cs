@@ -7,24 +7,22 @@ public class Networker : MonoBehaviour
 {
 
     #region Private Members
-    private int serverPort;
     private Dictionary<string, Transform> prefabs = new Dictionary<string, Transform>();
     #endregion
 
     #region Public Members
     public string serverIP;
+    public int serverPort;
     public string portTF;
     public int maxCo = 32;
 
-    public delegate void GuiDelegate();
-    public GuiDelegate guiRenderer;
+    public delegate void NetworkEvent();
+    public static event NetworkEvent ClientConnected, ServerInitialized, Disconnected;
 
     public List<string> prefabKeys;
     public List<Transform> prefabValues;
     public List<NetworkPlayer> players = new List<NetworkPlayer>();
     public Dictionary<NetworkPlayer, Unit> playerScripts = new Dictionary<NetworkPlayer, Unit>();
-    public Texture crosshairTexture;
-    public Texture crosshairFireTexture;
     #endregion
 
     #region Initialization
@@ -34,77 +32,13 @@ public class Networker : MonoBehaviour
             prefabs[prefabKeys[i]] = prefabValues[i];
         }
     }
-
-    // Use this for initialization
-    void Start() {
-        guiRenderer = MenuGUI;
-    }
-    #endregion
-
-    #region GUI
-    void OnGUI() {
-        guiRenderer();
-    }
-
-    void MenuGUI() {
-        // Client GUI
-        GUI.Label(new Rect(15, 15, 80, 20), "Server IP");
-        serverIP = GUI.TextField(new Rect(95, 15, 120, 20), serverIP, 15);
-
-        GUI.Label(new Rect(15, 45, 80, 20), "Server Port");
-        portTF = GUI.TextField(new Rect(95, 45, 120, 20), portTF, 15);
-
-        if (GUI.Button(new Rect(95, 70, 120, 30), "Connect")) {
-            System.Int32.TryParse(portTF, out serverPort);
-            ConnectToServer();
-        }
-
-        // Server GUI
-        GUI.Label(new Rect(15, 45, 80, 20), "Server Port");
-        portTF = GUI.TextField(new Rect(95, 45, 120, 20), portTF, 15);
-        if (GUI.Button(new Rect(Screen.width / 2 - 60, Screen.height / 2 - 15, 120, 30), "Start server")) {
-            LaunchServer();
-        }
-    }
-
-    void ClientConnectedGUI() {
-        if (Network.isClient) {
-            if (GUILayout.Button("Disconnect")) {
-                DisconnectFromServer();
-            }
-            if (GameObject.FindGameObjectWithTag("Player") != null) {
-                GUI.contentColor = Color.black;
-
-                GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-                Shooter shooterScript = playerGO.GetComponent<Shooter>();
-
-                Rect position = new Rect((Screen.width - crosshairTexture.width) / 2, (Screen.height - crosshairTexture.height) / 2, crosshairTexture.width, crosshairTexture.height);
-                GUI.DrawTexture(position, (Input.GetButton("Fire1") && shooterScript.Weapon.Ammo > 0) ? crosshairFireTexture : crosshairTexture);
-
-                GUI.Label(new Rect(0, 20, 80, 30), " Frags : " + shooterScript.frags.ToString());
-                GUI.Label(new Rect(0, 40, 130, 30), " Deaths : " + shooterScript.deaths.ToString());
-                GUI.Label(new Rect(0, Screen.height - 20, 80, 20), " + " + playerGO.GetComponent<Unit>().health.Current.ToString());
-
-                if (playerGO.GetComponent<Shooter>().Weapon != null) {
-                    GUI.Label(new Rect(Screen.width - 80, Screen.height - 20, 80, 20), " Ammo : " + playerGO.GetComponent<Shooter>().Weapon.Ammo);
-                }
-            }
-        }
-    }
-
-    void ServerInitializedGUI() {
-        GUI.Box(new Rect(Screen.width / 2 - 60, Screen.height / 2 - 15, 120, 30), "Server is running");
-        if (GUILayout.Button("Shutdown")) {
-            ShutdownServer();
-        }
-    }
     #endregion
 
     #region Networking
 
     #region Client
     // Connects the client to the server
-    void ConnectToServer() {
+    public void ConnectToServer() {
         Debug.Log("Connecting...");
         Network.Connect(serverIP, serverPort);
     }
@@ -112,13 +46,13 @@ public class Networker : MonoBehaviour
     // Triggered on the client when it's connected to the server
     void OnConnectedToServer() {
         Debug.Log("Connected to server");
-        guiRenderer = ClientConnectedGUI;
+        ClientConnected();
     }
 
     // Triggered on the client when the connection failed
     void OnFailedToConnect(NetworkConnectionError error) {
         Debug.Log("Could not connect to server: " + error);
-        guiRenderer = MenuGUI;
+        Disconnected();
     }
 
     // Disconnects the client from the server
@@ -137,7 +71,7 @@ public class Networker : MonoBehaviour
 
     #region Server
     // Launches the server
-    void LaunchServer() {
+    public void LaunchServer() {
         Debug.Log("Starting server");
         bool useNat = false;
         int port = 0;
@@ -147,13 +81,13 @@ public class Networker : MonoBehaviour
 
     // Triggered when the server is initialized
     void OnServerInitialized() {
-        guiRenderer = ServerInitializedGUI;
+        ServerInitialized();
         //LevelManager lm = LevelManager.Instance;
         //lm.Init();
     }
 
     // Stops the server
-    void ShutdownServer() {
+    public void ShutdownServer() {
         networkView.RPC("RemoteDisconnect", RPCMode.Others); // Make other players disconnect before the server
         Network.RemoveRPCs(Network.player);
         Network.Disconnect();
@@ -250,7 +184,7 @@ public class Networker : MonoBehaviour
             }
             Application.LoadLevel(Application.loadedLevel);
         }
-        guiRenderer = MenuGUI;
+        Disconnected();
     }
 
     [RPC]
