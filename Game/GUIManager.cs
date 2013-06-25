@@ -170,15 +170,22 @@ public class GUIManager : MonoBehaviour
         }
     }
 
-    void ServerInitializedGUI() {
+    void ServerGUI() {
         if (!Network.isServer) {
             return;
         }
 
-        GUI.Box(new Rect(Screen.width / 2 - 60, Screen.height / 2 - 15, 120, 30), "Server is running");
         if (GUILayout.Button("Shutdown")) {
             networker.ShutdownServer();
         }
+
+        GUILayout.BeginArea(new Rect(0f, 0f, Screen.width, Screen.height));
+        GUILayout.BeginVertical();
+        GUILayout.FlexibleSpace();
+        GUILayout.Box("Server is running", skin.GetStyle("title"));
+        GUILayout.FlexibleSpace();
+        GUILayout.EndVertical();
+        GUILayout.EndArea();
     }
     #endregion
 
@@ -188,7 +195,7 @@ public class GUIManager : MonoBehaviour
     }
 
     void Networker_ServerInitialized() {
-        guiRenderer = ServerInitializedGUI;
+        guiRenderer = ServerGUI;
     }
 
     void Networker_Disconnected() {
