@@ -151,8 +151,6 @@ public class GUIManager : MonoBehaviour
         }
 
         if (GameObject.FindGameObjectWithTag("Player") != null) {
-            GUI.contentColor = Color.black;
-
             GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
             Shooter shooterScript = playerGO.GetComponent<Shooter>();
 
