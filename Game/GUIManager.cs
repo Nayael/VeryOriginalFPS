@@ -15,6 +15,7 @@ public class GUIManager : MonoBehaviour
     public GuiDelegate guiRenderer;
 
     public Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
+    public GUISkin skin;
 
     public List<string> texturesKeys;
     public List<Texture> texturesInstances;
@@ -41,32 +42,102 @@ public class GUIManager : MonoBehaviour
 
     #region GUI
     void OnGUI() {
+        GUI.skin = skin;
         guiRenderer();
     }
 
     void MenuGUI() {
-        Texture logo = textures["Logo"];
+        GUILayout.BeginVertical(skin.GetStyle("mainMenu"), GUILayout.Height(Screen.height), GUILayout.Width(Screen.width));
+        GUILayout.FlexibleSpace();
 
-        GUI.DrawTexture(new Rect(Screen.width / 2 - logo.width / 2, 20, logo.width, logo.height), logo);
+        // Main Title
+        GUILayout.BeginArea(new Rect(0f, 0f, Screen.width, 100f));
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();  // Center Horizontally
+
+        GUILayout.BeginVertical();
+        GUILayout.FlexibleSpace();  // Center Vertically
+
+        GUILayout.Label("Very Original FPS", skin.GetStyle("mainTitle"));
+
+        //GUILayout.FlexibleSpace();
+        GUILayout.EndVertical();
+
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.EndArea();
+
+        // Begin Server/Client GUI
+        GUILayout.BeginArea(new Rect(30f, 100f, Screen.width - 60f, Screen.height - 100f));
+        GUILayout.BeginHorizontal(skin.GetStyle("padding"), GUILayout.ExpandWidth(true));    // This customStyle contains the padding values
+
+        // Server GUI
+        GUILayout.BeginVertical(skin.GetStyle("menuColumn"));
+
+        // Server Title
+        GUILayout.Label("Host Game", skin.GetStyle("title"));
+
+        GUILayout.BeginVertical(GUILayout.ExpandWidth(false));
+        GUILayout.FlexibleSpace();  // Used to center the fields vertically
+
+        // Server Port Field
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Server Port", skin.GetStyle("label"));
+        networker.portTF = GUILayout.TextField(networker.portTF, 15);
+        GUILayout.EndHorizontal();
+
+        // Launch Button
+        GUILayout.FlexibleSpace();
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Launch server")) {
+            networker.LaunchServer();
+        }
+        GUILayout.EndHorizontal();
+
+        GUILayout.EndVertical();
+        GUILayout.EndVertical();
+        // End Server GUI
 
         // Client GUI
-        GUI.Label(new Rect(15, 15, 80, 20), "Server IP");
-        networker.serverIP = GUI.TextField(new Rect(95, 15, 120, 20), networker.serverIP, 15);
+        GUILayout.BeginVertical(skin.GetStyle("menuColumn"));
 
-        GUI.Label(new Rect(15, 45, 80, 20), "Server Port");
-        networker.portTF = GUI.TextField(new Rect(95, 45, 120, 20), networker.portTF, 15);
+        // Client Title
+        GUILayout.Label("Join Game", skin.GetStyle("title"));
 
-        if (GUI.Button(new Rect(95, 70, 120, 30), "Connect")) {
+        GUILayout.BeginVertical(GUILayout.ExpandWidth(false));
+        GUILayout.FlexibleSpace();  // Used to center the fields vertically
+
+        // Server IP Field
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Server IP", skin.GetStyle("label"));
+        networker.serverIP = GUILayout.TextField(networker.serverIP, 15);
+        GUILayout.EndHorizontal();
+
+        // Server Port Field
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Server Port", skin.GetStyle("label"));
+        networker.portTF = GUILayout.TextField(networker.portTF, 15);
+        GUILayout.EndHorizontal();
+
+        // Join Button
+        GUILayout.FlexibleSpace();
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Join")) {
             System.Int32.TryParse(networker.portTF, out networker.serverPort);
             networker.ConnectToServer();
         }
 
-        // Server GUI
-        GUI.Label(new Rect(15, 45, 80, 20), "Server Port");
-        networker.portTF = GUI.TextField(new Rect(95, 45, 120, 20), networker.portTF, 15);
-        if (GUI.Button(new Rect(Screen.width / 2 - 60, Screen.height / 2 - 15, 120, 30), "Start server")) {
-            networker.LaunchServer();
-        }
+        GUILayout.EndVertical();
+        GUILayout.EndVertical();
+        // End Client GUI
+
+        GUILayout.EndHorizontal();
+        GUILayout.EndArea();
+        // End Server/Client GUI
+
+        GUILayout.EndVertical();
     }
 
     void GameGUI() {
