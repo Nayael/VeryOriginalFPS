@@ -82,7 +82,7 @@ public class GUIManager : MonoBehaviour
 
         // Server Port Field
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Server Port", skin.GetStyle("label"));
+        GUILayout.Label("Listen Port", skin.GetStyle("label"));
         networker.portTF = GUILayout.TextField(networker.portTF, 15);
         GUILayout.EndHorizontal();
 
@@ -145,7 +145,6 @@ public class GUIManager : MonoBehaviour
             return;
         }
         Texture crosshairTexture = textures["Crosshair"];
-        Texture crosshairFireTexture = textures["CrosshairFire"];
 
         if (GUILayout.Button("Disconnect")) {
             networker.DisconnectFromServer();
@@ -158,10 +157,32 @@ public class GUIManager : MonoBehaviour
             Shooter shooterScript = playerGO.GetComponent<Shooter>();
 
             Rect position = new Rect((Screen.width - crosshairTexture.width) / 2, (Screen.height - crosshairTexture.height) / 2, crosshairTexture.width, crosshairTexture.height);
-            GUI.DrawTexture(position, (Input.GetButton("Fire1") && shooterScript.Weapon.Ammo > 0) ? crosshairFireTexture : crosshairTexture);
+            GUI.DrawTexture(position, crosshairTexture);
 
-            GUI.Label(new Rect(0, 20, 80, 30), " Frags : " + shooterScript.frags.ToString());
-            GUI.Label(new Rect(0, 40, 130, 30), " Deaths : " + shooterScript.deaths.ToString());
+            GUILayout.BeginArea(new Rect(Screen.width - 120f, 30f, 100f, 80f));
+            GUILayout.BeginVertical();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Box(textures["Frags"], GUILayout.Width(24f), GUILayout.Height(24f));
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(shooterScript.frags.ToString(), skin.GetStyle("HUDText"));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Box(textures["Deaths"], GUILayout.Width(24f), GUILayout.Height(32f));
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(shooterScript.deaths.ToString(), skin.GetStyle("HUDText"));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
+
             GUI.Label(new Rect(0, Screen.height - 20, 80, 20), " + " + playerGO.GetComponent<Unit>().health.Current.ToString());
 
             if (playerGO.GetComponent<Shooter>().Weapon != null) {
