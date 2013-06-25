@@ -82,8 +82,6 @@ public class Networker : MonoBehaviour
     // Triggered when the server is initialized
     void OnServerInitialized() {
         ServerInitialized();
-        //LevelManager lm = LevelManager.Instance;
-        //lm.Init();
     }
 
     // Stops the server
@@ -120,7 +118,7 @@ public class Networker : MonoBehaviour
 
         // Give the player a weapon
         //AWeapon newPlayerWeapon = WeaponManager.Instance.GetWeapon("RocketLauncher");
-        playerNetworkView.RPC("TakeWeapon", player, "RocketLauncher");  // Give the player a default weapon
+        playerNetworkView.RPC("TakeWeapon", player, "Gun");  // Give the player a default weapon
     }
 
     // Makes a player respawn
@@ -182,7 +180,7 @@ public class Networker : MonoBehaviour
                 Camera mainCamera = GameObject.FindWithTag("MainCamera").camera;
                 mainCamera.enabled = true;
             }
-            Application.LoadLevel(Application.loadedLevel);
+            Application.LoadLevel("FPS");
         }
         Disconnected();
     }

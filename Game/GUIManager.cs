@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System;
 
 public class GUIManager : MonoBehaviour
 {
@@ -12,12 +14,21 @@ public class GUIManager : MonoBehaviour
     public delegate void GuiDelegate();
     public GuiDelegate guiRenderer;
 
-    public Texture crosshairTexture;
-    public Texture crosshairFireTexture;
+    public Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
+
+    public List<string> texturesKeys;
+    public List<Texture> texturesInstances;
     #endregion
 
     #region Initialization
-    void Start () {
+    void Awake() {
+        // Creating the Dictionary
+        for (int i = 0; i < texturesInstances.Count; i++) {
+            textures[texturesKeys[i]] = texturesInstances[i];
+        }
+    }
+
+    void Start() {
         networker = GameObject.FindGameObjectWithTag("Networker").GetComponent<Networker>();
         guiRenderer = MenuGUI;
 
@@ -34,6 +45,10 @@ public class GUIManager : MonoBehaviour
     }
 
     void MenuGUI() {
+        Texture logo = textures["Logo"];
+
+        GUI.DrawTexture(new Rect(Screen.width / 2 - logo.width / 2, 20, logo.width, logo.height), logo);
+
         // Client GUI
         GUI.Label(new Rect(15, 15, 80, 20), "Server IP");
         networker.serverIP = GUI.TextField(new Rect(95, 15, 120, 20), networker.serverIP, 15);
@@ -54,10 +69,12 @@ public class GUIManager : MonoBehaviour
         }
     }
 
-    void ClientConnectedGUI() {
+    void GameGUI() {
         if (!Network.isClient) {
             return;
         }
+        Texture crosshairTexture = textures["Crosshair"];
+        Texture crosshairFireTexture = textures["CrosshairFire"];
 
         if (GUILayout.Button("Disconnect")) {
             networker.DisconnectFromServer();
@@ -96,7 +113,7 @@ public class GUIManager : MonoBehaviour
 
     #region Event Listeners
     void Networker_ClientConnected() {
-        guiRenderer = ClientConnectedGUI;
+        guiRenderer = GameGUI;
     }
 
     void Networker_ServerInitialized() {

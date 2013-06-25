@@ -74,13 +74,15 @@ public class Shooter : MonoBehaviour
 
     #region Networking
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-        Quaternion weaponRot = Quaternion.identity;
-        if (stream.isWriting) {
-            weaponRot = _weapon.transform.rotation;
-            stream.Serialize(ref weaponRot);
-        } else if (Network.player != owner) {
-            stream.Serialize(ref weaponRot);
-            _weapon.transform.rotation = weaponRot;
+        if (_weapon != null) {
+            Quaternion weaponRot = Quaternion.identity;
+            if (stream.isWriting) {
+                weaponRot = _weapon.transform.rotation;
+                stream.Serialize(ref weaponRot);
+            } else if (Network.player != owner) {
+                stream.Serialize(ref weaponRot);
+                _weapon.transform.rotation = weaponRot;
+            }
         }
     }
     #endregion
@@ -91,10 +93,10 @@ public class Shooter : MonoBehaviour
         frags++;
     }
 
-    [RPC]
     /**
      * Called when another client has equiped a weapon
      */
+    [RPC]
     void EquipWeaponRemote(string weaponType, Vector3 position) {
         // If there was a previous weapon, put it back in the pool
         if (_weapon != null) {

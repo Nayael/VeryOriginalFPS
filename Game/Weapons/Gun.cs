@@ -4,6 +4,10 @@ using UnityEngine;
 public class Gun : AWeapon, IWeapon
 {
 
+    #region Public Members
+    public float hitRange;  // The shoot range of the weapon
+    #endregion
+
     #region Private Members
     private static float strength = 5f;
     #endregion
@@ -38,18 +42,19 @@ public class Gun : AWeapon, IWeapon
 
     // Checks if the gun can hit a given target
     override public bool CanHit(Unit unit) {
-        Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
-        Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-		RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity)) {
+        if (Vector3.Distance(this.owner.transform.position, unit.transform.position) < this.hitRange) {
             return true;
-// BUG HERE
-            //Collider collider = hit.collider;
-            //if (collider.GetComponent<Unit>() == unit) {
-            //    return true;
-            //}
         }
+        //Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
+        //Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        //RaycastHit hit;
+
+        //if (Physics.Raycast(ray, out hit, Mathf.Infinity)) {
+        //    Collider collider = hit.collider;
+        //    if (collider.GetComponent<Unit>() == unit) {
+        //        return true;
+        //    }
+        //}
         return false;
     }
     #endregion

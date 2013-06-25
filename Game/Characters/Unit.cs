@@ -64,7 +64,7 @@ public class Unit : MonoBehaviour
         if (targetIndex == -1 || !_alive || !GetComponent<Shooter>().Weapon.CanHit(unit)) {
             return;
         }
-
+        Debug.Log("Hurt");
         networkView.RPC("Hurt", GetComponent<FPSController>().owner, damage, shooter);
         unit.Hurt(damage, shooter);
     }
