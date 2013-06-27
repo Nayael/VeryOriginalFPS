@@ -72,6 +72,7 @@ public class GUIManager : MonoBehaviour
         GUILayout.BeginHorizontal(skin.GetStyle("padding"), GUILayout.ExpandWidth(true));    // This customStyle contains the padding values
 
         // Server GUI
+        skin.GetStyle("menuColumn").padding.left = (int)((Screen.width - 60f) / 8f);
         GUILayout.BeginVertical(skin.GetStyle("menuColumn"));
 
         // Server Title
@@ -181,10 +182,34 @@ public class GUIManager : MonoBehaviour
             GUILayout.EndVertical();
             GUILayout.EndArea();
 
-            GUI.Label(new Rect(0, Screen.height - 20, 80, 20), " + " + playerGO.GetComponent<Unit>().health.Current.ToString());
+            GUILayout.BeginArea(new Rect(20f, Screen.height - 50f, 100f, 44f));
+            GUILayout.BeginHorizontal();
+            
+            GUILayout.Box(textures["Health"]);
+
+            GUILayout.BeginVertical();
+            GUILayout.Space(5f);
+            GUILayout.Label(playerGO.GetComponent<Unit>().health.Current.ToString(), skin.GetStyle("HUDText"));
+            GUILayout.EndVertical();
+            
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
 
             if (playerGO.GetComponent<Shooter>().Weapon != null) {
-                GUI.Label(new Rect(Screen.width - 80, Screen.height - 20, 80, 20), " Ammo : " + playerGO.GetComponent<Shooter>().Weapon.Ammo);
+                string weaponName = playerGO.GetComponent<Shooter>().Weapon.GetType().ToString();
+                Texture ammoTexture = textures[weaponName];
+
+                GUILayout.BeginArea(new Rect(Screen.width - 120f, Screen.height - 60f, 110f, 60f));
+                GUILayout.BeginHorizontal();
+                GUILayout.Box(ammoTexture, GUILayout.Width(44f), GUILayout.Height(44f));
+                GUILayout.FlexibleSpace();
+                GUILayout.BeginVertical();
+                GUILayout.Space(11f);
+                GUILayout.Label(playerGO.GetComponent<Shooter>().Weapon.Ammo.ToString(), skin.GetStyle("HUDText"));
+                GUILayout.EndVertical();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                GUILayout.EndArea();
             }
         }
     }

@@ -68,7 +68,7 @@ public class Shooter : MonoBehaviour
         _weapon.gameObject.SetActiveRecursively(true);
         _weapon.enabled = true;
 
-        _weapon.transform.localPosition = new Vector3(0.29f, -0.215f, 0.61f);
+        _weapon.transform.localPosition = new Vector3(0.2967735f, -0.215f, 0.71f);
         networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), _weapon.transform.position);
     }
 
