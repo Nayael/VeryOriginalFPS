@@ -21,16 +21,8 @@ public class Unit : MonoBehaviour
     [RPC]
     public void Die() {
         enabled = false;
-        //gameObject.active = false;
         _alive = false;
         GetComponent<Shooter>().deaths++;
-
-        //GameObject.Destroy(gameObject);
-
-        //// Disconnect the player who died
-        //if (GetComponent<FPSController>().owner == Network.player) {
-        //    GameObject.FindGameObjectWithTag("Networker").GetComponent<Networker>().DisconnectFromServer();
-        //}
 
         //// If we are the server, remove the dead player from the list of players
         if (Network.isServer) {
@@ -42,7 +34,7 @@ public class Unit : MonoBehaviour
     public void Hurt(float damage, NetworkPlayer shooter) {
         health.Current -= damage;
         // If we are the server and the unit has no health left, we make him die
-        if (Network.isServer && health.Current == 0) {
+        if (Network.isServer && health.Current < 1f) {
             // I am the killer, add a frag
             GameObject.FindGameObjectWithTag("Networker").GetComponent<Networker>().playerScripts[shooter].GetComponent<Shooter>().networkView.RPC("AddFrag", shooter);
 

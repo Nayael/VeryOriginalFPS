@@ -11,6 +11,7 @@ public class Shooter : MonoBehaviour
     #region Private Members
     private AWeapon _weapon;
     private List<AWeapon> _weapons = new List<AWeapon>();
+    private int _currentWeapon = 0;
     #endregion
 
     #region Public Members
@@ -52,24 +53,50 @@ public class Shooter : MonoBehaviour
         if (Input.GetButtonUp("Fire1")) {
             _weapon.EndCooldown();
         }
+        if (Input.GetAxis("Mouse ScrollWheel") > 0f) {
+            NextWeapon();
+        } else if (Input.GetAxis("Mouse ScrollWheel") < 0f) {
+            PreviousWeapon();
+        }
         networkView.RPC("SendWeaponRotation", RPCMode.Server, _weapon.transform.rotation);
     }
     #endregion
 
     #region Methods
-    void EquipWeapon(AWeapon weapon) {
+    void EquipWeapon(int weaponIndex) {
         // First, we deactivate the previous weapon
         if (_weapon != null) {
-            WeaponManager.Instance.PutWeaponBack(_weapon);
+            //WeaponManager.Instance.PutWeaponBack(_weapon);
+            _weapon.gameObject.SetActiveRecursively(false);
+            _weapon.enabled = false;
         }
 
         // We activate the new weapon
-        _weapon = weapon;
+        _weapon = _weapons[weaponIndex];
         _weapon.gameObject.SetActiveRecursively(true);
         _weapon.enabled = true;
+        _currentWeapon = weaponIndex;
 
         _weapon.transform.localPosition = _weapon.positionInCamera;
-        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), _weapon.transform.position);
+        Vector3 weaponPosition = _weapon.transform.TransformPoint(Vector3.zero);
+        Debug.Log(_weapon.GetType().ToString() + " weaponPosition " + _weapon.transform.localPosition + weaponPosition);
+        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), weaponPosition);
+    }
+
+    void NextWeapon() {
+        _currentWeapon++;
+        if (_currentWeapon >= _weapons.Count) {
+            _currentWeapon = 0;
+        }
+        EquipWeapon(_currentWeapon);
+    }
+
+    void PreviousWeapon() {
+        _currentWeapon--;
+        if (_currentWeapon < 0) {
+            _currentWeapon = _weapons.Count - 1;
+        }
+        EquipWeapon(_currentWeapon);
     }
 
     #region Networking
@@ -101,16 +128,17 @@ public class Shooter : MonoBehaviour
         // If there was a previous weapon, put it back in the pool
         if (_weapon != null) {
             WeaponManager.Instance.PutWeaponBack(_weapon);
+            _weapon = null;
         }
 
         // Get an instance of the weapon type, and add it as a child of the owner
-        AWeapon weapon = WeaponManager.Instance.GetWeapon(weaponType);
-        _weapon = weapon;
+        _weapon = WeaponManager.Instance.GetWeapon(weaponType);
         _weapon.gameObject.SetActiveRecursively(true);
         _weapon.enabled = true;
         _weapon.owner = this.GetComponent<Unit>();
         _weapon.transform.position = position;
         _weapon.transform.parent = _weapon.owner.transform;
+        Debug.Log("EquipWeaponRemote " + _weapon.transform.localPosition);
     }
 
     [RPC]
@@ -132,7 +160,7 @@ public class Shooter : MonoBehaviour
 
             // Equip it if necessary
             if (autoEquip == true) {
-                EquipWeapon(weapon);
+                EquipWeapon(_weapons.IndexOf(weapon));
             }
         }
     }

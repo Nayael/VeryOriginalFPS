@@ -189,7 +189,7 @@ public class GUIManager : MonoBehaviour
 
             GUILayout.BeginVertical();
             GUILayout.Space(5f);
-            GUILayout.Label(playerGO.GetComponent<Unit>().health.Current.ToString(), skin.GetStyle("HUDText"));
+            GUILayout.Label( ( (int)(playerGO.GetComponent<Unit>().health.Current) ).ToString(), skin.GetStyle("HUDText"));
             GUILayout.EndVertical();
             
             GUILayout.EndHorizontal();

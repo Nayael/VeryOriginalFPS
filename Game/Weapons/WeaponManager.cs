@@ -59,9 +59,9 @@ public sealed class WeaponManager
 	}
 
     public void PutWeaponBack(AWeapon weapon) {
+        weapon.transform.parent = null;
         weapon.gameObject.SetActiveRecursively(false);
         weapon.enabled = false;
-        Debug.Log(weapon.GetType().ToString());
         pool[weapon.GetType().ToString()].Enqueue(weapon);
     }
 

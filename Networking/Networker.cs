@@ -23,6 +23,7 @@ public class Networker : MonoBehaviour
     public List<Transform> prefabValues;
     public List<NetworkPlayer> players = new List<NetworkPlayer>();
     public Dictionary<NetworkPlayer, Unit> playerScripts = new Dictionary<NetworkPlayer, Unit>();
+    public List<Transform> spawnPoints = new List<Transform>();
     #endregion
 
     #region Initialization
@@ -104,9 +105,14 @@ public class Networker : MonoBehaviour
         int playerNumber = Convert.ToInt32(tempPlayerString);
 
         // Instanciate the new player over the network
+        Transform spawnPoint = spawnPoints[UnityEngine.Random.Range(0, spawnPoints.Count - 1)];
+        while (Physics.OverlapSphere(spawnPoint.position, prefabs["Unit"].localScale.z).Length > 0) {
+            spawnPoint.position += new Vector3(1f, 0, 1f);
+        }
+
         Transform newPlayerTransform = (Transform)Network.Instantiate(
             prefabs["Unit"],
-            new Vector3(UnityEngine.Random.Range(0f, 50f), 15f, UnityEngine.Random.Range(0f, 50f)),
+            spawnPoint.position,
             transform.rotation,
             playerNumber);
 
@@ -117,7 +123,7 @@ public class Networker : MonoBehaviour
         playerNetworkView.RPC("SetPlayer", RPCMode.AllBuffered, player);
 
         // Give the player a weapon
-        //AWeapon newPlayerWeapon = WeaponManager.Instance.GetWeapon("RocketLauncher");
+        playerNetworkView.RPC("TakeWeapon", player, "Gun");  // Give the player a default weapon
         playerNetworkView.RPC("TakeWeapon", player, "RocketLauncher");  // Give the player a default weapon
     }
 
