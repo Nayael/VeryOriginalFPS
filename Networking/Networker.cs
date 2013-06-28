@@ -118,7 +118,7 @@ public class Networker : MonoBehaviour
 
         // Give the player a weapon
         //AWeapon newPlayerWeapon = WeaponManager.Instance.GetWeapon("RocketLauncher");
-        playerNetworkView.RPC("TakeWeapon", player, "Gun");  // Give the player a default weapon
+        playerNetworkView.RPC("TakeWeapon", player, "RocketLauncher");  // Give the player a default weapon
     }
 
     // Makes a player respawn

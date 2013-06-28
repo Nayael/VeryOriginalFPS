@@ -11,6 +11,7 @@ abstract public class AWeapon : MonoBehaviour, IWeapon
     public int baseCooldown = 0;
     public Unit owner;
     public string bulletType;
+    public Vector3 positionInCamera = Vector3.zero;
     #endregion
 	
     #region Protected Members
