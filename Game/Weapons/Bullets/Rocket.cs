@@ -5,7 +5,9 @@ public class Rocket : Bullet
 {
     #region Update
     void FixedUpdate () {
-        transform.Translate(transform.forward * (1f / weight) * Time.deltaTime, Space.World);
+        if (Network.isServer) {
+            transform.Translate(transform.forward * (1f / weight) * Time.deltaTime, Space.World);
+        }
     }
     #endregion
 }

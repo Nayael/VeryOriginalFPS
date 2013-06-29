@@ -55,7 +55,7 @@ public class BulletsManager
         if (!pool.ContainsKey(bullet.GetType().ToString())) {
             pool.Add(bullet.GetType().ToString(), new List<Bullet>());
         }
-        bullet.Deactivate();
+        bullet.Init();
         pool[bullet.GetType().ToString()].Add(bullet);
     }
 

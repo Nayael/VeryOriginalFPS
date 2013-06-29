@@ -46,7 +46,6 @@ public class RocketLauncher : AWeapon, IWeapon
         _cooldown = baseCooldown;
         Rocket bullet = (Rocket)BulletsManager.Instance.GetBullet(bulletType);
         bullet.Fire(owner, position, direction);   // Fire the bullet
-        //this.networkView.RPC("ShootAtMe", RPCMode.Server, Gun.strength, fpsCam.transform.parent.GetComponent<FPSController>().owner);
     }
     #endregion
 }

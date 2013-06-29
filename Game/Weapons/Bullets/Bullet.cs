@@ -32,6 +32,7 @@ abstract public class Bullet : MonoBehaviour
     #region Update
     protected virtual void Update() {
         health.Current--;		    // The bullet degrades itself
+        Debug.Log(health);
         if (health.Current <= 0) {	// Once its lifetime is over
 			Destroy();		    // We destroy the bullet
 		}
@@ -44,7 +45,7 @@ abstract public class Bullet : MonoBehaviour
         transform.position = position;
         transform.LookAt(_direction);
         Activate();
-        networkView.RPC("FireRemote", RPCMode.OthersBuffered);
+        networkView.RPC("FireRemote", RPCMode.OthersBuffered, Network.player, position, _direction);
 	}
 
 	public virtual void Fire(Unit owner, Vector3 position, Vector3 direction) {
@@ -83,11 +84,19 @@ abstract public class Bullet : MonoBehaviour
 
     #region RPC
     [RPC]
-    void FireRemote() {
-        Debug.Log("FireRemote");
+    void FireRemote(NetworkPlayer shooter, Vector3 position, Vector3 direction) {
         transform.parent = null;
-        Activate();
-        enabled = false;
+        if (Network.isServer) {
+            Activate();
+            _direction = direction;
+            transform.position = position;
+            transform.LookAt(_direction);
+            networkView.RPC("ValidateBulletShoot", shooter);    // We tell the shooter that the server is taking care of the bullet's movement
+        
+        // If we are a client, then we just make the bullet visible
+        } else {
+            transform.FindChild("Body").renderer.enabled = true;
+        }
     }
 
     [RPC]
@@ -100,14 +109,27 @@ abstract public class Bullet : MonoBehaviour
     void PutInPool() {
         Debug.Log("PutInPool");
         BulletsManager.Instance.PutBullet(this);
-    } 
+    }
+
+    [RPC]
+    /// <summary>
+    /// Called from the server to the client who shot. It tells him that the server is taking care of the bullet's movement
+    /// </summary>
+    void ValidateBulletShoot() {
+        enabled = false;
+        GetComponent<CapsuleCollider>().enabled = false;
+    }
     #endregion
 
     #endregion
 
     #region Events
     protected void OnTriggerEnter(Collider other) {
-        Debug.Log("Hit");
+        if (Network.isServer) {
+            if (true) {
+
+            }
+        }
     }
     #endregion
 
