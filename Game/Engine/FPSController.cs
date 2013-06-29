@@ -141,7 +141,7 @@ class FPSController : MonoBehaviour
 
         // If we are the owner
         if (owner == Network.player) {
-            this.enabled = true;    // Enable me
+            this.enabled = true;    // Activate me
             this.gameObject.tag = "Player";
 
             if (GetComponent<Shooter>() != null) {
@@ -151,7 +151,7 @@ class FPSController : MonoBehaviour
             }
 
             // Use a FPSCamera
-            Camera.main.enabled = false;    // Disable the main camera
+            Camera.main.enabled = false;    // Deactivate the main camera
             Transform fpsCam = (Transform)Instantiate(cameraPrefab);
             fpsCam.parent = this.transform;
             fpsCam.localPosition = new Vector3(0f, 0.4f, 0.26f);

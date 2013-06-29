@@ -16,16 +16,16 @@ abstract public class Bullet : MonoBehaviour
     #endregion
 
     #region Initialization
-    void Awake() {
-        Init();
-		//GameEventManager.GameOver += GameOver;
-	}
-
     public void Init() {
-        enabled = false;
-        gameObject.SetActiveRecursively(false);
+        Deactivate();
         _direction = Vector3.zero;
         health.Fill();
+    }
+
+    void OnNetworkInstantiate(NetworkMessageInfo info) {
+        if (!networkView.isMine) {
+            BulletsManager.Instance.PutBullet(this);
+        }
     }
     #endregion
 
@@ -43,8 +43,8 @@ abstract public class Bullet : MonoBehaviour
         transform.parent = null;
         transform.position = position;
         transform.LookAt(_direction);
-        gameObject.SetActiveRecursively(true);
-        enabled = true;
+        Activate();
+        networkView.RPC("FireRemote", RPCMode.OthersBuffered);
 	}
 
 	public virtual void Fire(Unit owner, Vector3 position, Vector3 direction) {
@@ -52,33 +52,62 @@ abstract public class Bullet : MonoBehaviour
 		Fire(owner, position);
 	}
 
+    /// <summary>
+    /// Makes the bullet visible and activates it
+    /// </summary>
+    public void Activate() {
+        enabled = true;
+        transform.FindChild("Body").renderer.enabled = true;
+        GetComponent<CapsuleCollider>().enabled = true;
+    }
+
+    /// <summary>
+    /// Makes the bullet invisible and deactivates it
+    /// </summary>
+    public void Deactivate() {
+        enabled = false;
+        transform.FindChild("Body").renderer.enabled = false;
+        GetComponent<CapsuleCollider>().enabled = false;
+    }
+
 	public void Destroy() {
-		enabled = false;
-		gameObject.SetActiveRecursively(false);
+		Deactivate();
         _direction = Vector3.zero;
-        BulletsManager.Instance.pool[GetType().ToString()].Enqueue(this);	// We put it back in the pool
+        BulletsManager.Instance.PutBullet(this);	// We put it back in the pool
+        networkView.RPC("PutInPool", RPCMode.OthersBuffered);
 	}
 
-	protected void GameOver () {
-		Destroy();
-	}
+    protected void GameOver() {
+        Destroy();
+    }
+
+    #region RPC
+    [RPC]
+    void FireRemote() {
+        Debug.Log("FireRemote");
+        transform.parent = null;
+        Activate();
+        enabled = false;
+    }
+
+    [RPC]
+    void RemoveFromPool() {
+        Debug.Log("RemoveFromPool");
+        BulletsManager.Instance.RemoveBullet(this);
+    }
+
+    [RPC]
+    void PutInPool() {
+        Debug.Log("PutInPool");
+        BulletsManager.Instance.PutBullet(this);
+    } 
+    #endregion
+
     #endregion
 
     #region Events
-    public void OnCollisionEnter(Collision collision) {
-        //// If the bullet was shot by the hero and hits him, then we stop the function
-        //if (collision.gameObject.GetComponent<Hero>() != null && !this.evil
-        //|| collision.gameObject.GetComponent<Hero>() == null && this.evil) {
-        //    return;
-        //}
-        //this.Destroy();	// Everytime the bullet hits something, it explodes
-
-        //// If the bullet hit a object that is not a owner, stop here
-        //Character target;
-        //if ((target = collision.gameObject.GetComponent<Character>()) == null) {
-        //    return;
-        //}
-        //target.Hurt(this.strength);
+    protected void OnTriggerEnter(Collider other) {
+        Debug.Log("Hit");
     }
     #endregion
 

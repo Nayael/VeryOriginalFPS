@@ -19,11 +19,17 @@ public class BulletsManager
 	public int poolSize = 50;
     public string[] bulletNames = new string[] {"Rocket"};
     public Dictionary<string, Object> prefabs = new Dictionary<string, Object>();
-    public Dictionary<string, Queue<Bullet>> pool = new Dictionary<string, Queue<Bullet>>();
+    public Dictionary<string, List<Bullet>> pool = new Dictionary<string, List<Bullet>>();
     #endregion
 
     #region Initialization
-    private BulletsManager() {
+    private BulletsManager() { }
+
+    public void Initialize() {
+        if (Network.isClient) {
+            return;
+        }
+
         foreach (string bulletName in bulletNames) {
             prefabs[bulletName] = Resources.Load(bulletName);
             AddBulletType(bulletName, prefabs[bulletName]);
@@ -33,30 +39,47 @@ public class BulletsManager
 
     #region Methods
     public void AddBulletType(string type, Object bulletPrefab) {
+        if (Network.isClient) {
+            return;
+        }
+
 		// We create a pool of bullets
-		Queue<Bullet> queue = new Queue<Bullet>();
 		Bullet bullet;
 		for (int i = 0; i < poolSize; i++) {
-            bullet = (Bullet)((GameObject)Object.Instantiate(bulletPrefab)).GetComponent(type);
-			queue.Enqueue(bullet);
+            bullet = CreateBulletInstance(type);
+            PutBullet(bullet);
 		}
-        pool[type] = queue;
 	}
+
+    public void PutBullet(Bullet bullet) {
+        if (!pool.ContainsKey(bullet.GetType().ToString())) {
+            pool.Add(bullet.GetType().ToString(), new List<Bullet>());
+        }
+        bullet.Deactivate();
+        pool[bullet.GetType().ToString()].Add(bullet);
+    }
+
+    public void RemoveBullet(Bullet bullet) {
+        pool[bullet.GetType().ToString()].Remove(bullet);
+    }
 
     public Bullet GetBullet(string type) {
         Bullet bullet;
         if (pool[type].Count == 0) {
-            Object bulletPrefab = GetBulletPrefab(type);
-            bullet = (Bullet)((GameObject)Object.Instantiate(bulletPrefab)).GetComponent(type);
-            pool[type].Enqueue(bullet);
+            bullet = CreateBulletInstance(type);
+            PutBullet(bullet);
         }
-        bullet = pool[type].Dequeue();
+        bullet = pool[type][0];
+        pool[type].RemoveAt(0);
         bullet.Init();
         return bullet;
 	}
 
-    public Object GetBulletPrefab(string type) {
-        return Object.Instantiate(prefabs[type]);
+    public Bullet CreateBulletInstance(string type) {
+        Bullet bullet = (Bullet)((GameObject)Network.Instantiate(
+            prefabs[type], Vector3.zero, Quaternion.identity, 0
+        )).GetComponent(type);
+        return bullet;
     }
     #endregion
 

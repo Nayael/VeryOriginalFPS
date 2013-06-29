@@ -83,6 +83,7 @@ public class Networker : MonoBehaviour
     // Triggered when the server is initialized
     void OnServerInitialized() {
         ServerInitialized();
+        BulletsManager.Instance.Initialize();
     }
 
     // Stops the server

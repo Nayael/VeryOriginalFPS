@@ -79,7 +79,7 @@ public class Shooter : MonoBehaviour
 
         _weapon.transform.localPosition = _weapon.positionInCamera;
         Vector3 weaponPosition = _weapon.transform.TransformPoint(Vector3.zero);
-        Debug.Log(_weapon.GetType().ToString() + " weaponPosition " + _weapon.transform.localPosition + weaponPosition);
+        //Debug.Log(_weapon.GetType().ToString() + " weaponPosition " + _weapon.transform.localPosition + weaponPosition);
         networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), weaponPosition);
     }
 

@@ -45,16 +45,6 @@ public class Gun : AWeapon, IWeapon
         if (Vector3.Distance(this.owner.transform.position, unit.transform.position) < this.hitRange) {
             return true;
         }
-        //Camera fpsCam = owner.GetComponentInChildren<FPSCamera>().camera;
-        //Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        //RaycastHit hit;
-
-        //if (Physics.Raycast(ray, out hit, Mathf.Infinity)) {
-        //    Collider collider = hit.collider;
-        //    if (collider.GetComponent<Unit>() == unit) {
-        //        return true;
-        //    }
-        //}
         return false;
     }
     #endregion
