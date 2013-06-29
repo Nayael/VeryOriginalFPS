@@ -138,7 +138,7 @@ public class Shooter : MonoBehaviour
         _weapon.owner = this.GetComponent<Unit>();
         _weapon.transform.position = position;
         _weapon.transform.parent = _weapon.owner.transform;
-        Debug.Log("EquipWeaponRemote " + _weapon.transform.localPosition);
+        //Debug.Log("EquipWeaponRemote " + _weapon.transform.localPosition);
     }
 
     [RPC]

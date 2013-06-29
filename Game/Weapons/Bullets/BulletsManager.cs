@@ -66,8 +66,9 @@ public class BulletsManager
     public Bullet GetBullet(string type) {
         Bullet bullet;
         if (pool[type].Count == 0) {
-            bullet = CreateBulletInstance(type);
-            PutBullet(bullet);
+            return null;
+            //bullet = CreateBulletInstance(type);
+            //PutBullet(bullet);
         }
         bullet = pool[type][0];
         pool[type].RemoveAt(0);

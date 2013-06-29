@@ -42,10 +42,13 @@ public class RocketLauncher : AWeapon, IWeapon
             return;
         }
         _cooldown = baseCooldown;
-        base.Shoot(position, direction);
         _cooldown = baseCooldown;
         Rocket bullet = (Rocket)BulletsManager.Instance.GetBullet(bulletType);
+        if (bullet == null) {
+            return;
+        }
         bullet.Fire(owner, position, direction);   // Fire the bullet
+        base.Shoot(position, direction);
     }
     #endregion
 }

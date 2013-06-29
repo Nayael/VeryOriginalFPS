@@ -13,6 +13,7 @@ abstract public class Bullet : MonoBehaviour
 
     #region Protected Members
 	protected Vector3 _direction;   // The bullet's _direction can be defined
+    protected NetworkPlayer _shooter;
     #endregion
 
     #region Initialization
@@ -31,11 +32,13 @@ abstract public class Bullet : MonoBehaviour
 
     #region Update
     protected virtual void Update() {
-        health.Current--;		    // The bullet degrades itself
-        Debug.Log(health);
-        if (health.Current <= 0) {	// Once its lifetime is over
-			Destroy();		    // We destroy the bullet
-		}
+        // Only the server takes care of the bullets' health
+        if (Network.isServer) {
+            health.Current--;		    // The bullet degrades itself
+            if (health.Current <= 0) {	// Once its lifetime is over
+                Destroy();		    // We destroy the bullet
+            }
+        }
 	}
     #endregion
 
@@ -44,6 +47,7 @@ abstract public class Bullet : MonoBehaviour
         transform.parent = null;
         transform.position = position;
         transform.LookAt(_direction);
+        transform.Translate(transform.forward * owner.GetComponent<FPSController>().MoveDirection.magnitude * Time.deltaTime, Space.World);
         Activate();
         networkView.RPC("FireRemote", RPCMode.OthersBuffered, Network.player, position, _direction);
 	}
@@ -52,6 +56,14 @@ abstract public class Bullet : MonoBehaviour
 		_direction = direction;
 		Fire(owner, position);
 	}
+
+    protected void Apply(GameObject target) {
+        if (target.GetComponent<Unit>() == null) {
+            return;
+        }
+        target.GetComponent<Unit>().networkView.RPC("Hurt", target.GetComponent<FPSController>().owner, this.strength, this._shooter);
+        target.GetComponent<Unit>().Hurt(this.strength, this._shooter);
+    }
 
     /// <summary>
     /// Makes the bullet visible and activates it
@@ -89,9 +101,10 @@ abstract public class Bullet : MonoBehaviour
         if (Network.isServer) {
             Activate();
             _direction = direction;
+            _shooter = shooter;
             transform.position = position;
             transform.LookAt(_direction);
-            networkView.RPC("ValidateBulletShoot", shooter);    // We tell the shooter that the server is taking care of the bullet's movement
+            networkView.RPC("ValidateBulletShoot", _shooter);    // We tell the shooter that the server is taking care of the bullet's movement
         
         // If we are a client, then we just make the bullet visible
         } else {
@@ -101,13 +114,11 @@ abstract public class Bullet : MonoBehaviour
 
     [RPC]
     void RemoveFromPool() {
-        Debug.Log("RemoveFromPool");
         BulletsManager.Instance.RemoveBullet(this);
     }
 
     [RPC]
     void PutInPool() {
-        Debug.Log("PutInPool");
         BulletsManager.Instance.PutBullet(this);
     }
 
@@ -116,7 +127,6 @@ abstract public class Bullet : MonoBehaviour
     /// Called from the server to the client who shot. It tells him that the server is taking care of the bullet's movement
     /// </summary>
     void ValidateBulletShoot() {
-        enabled = false;
         GetComponent<CapsuleCollider>().enabled = false;
     }
     #endregion
@@ -125,10 +135,12 @@ abstract public class Bullet : MonoBehaviour
 
     #region Events
     protected void OnTriggerEnter(Collider other) {
+        if (other.gameObject.GetComponent<Unit>() == null) {
+            return;
+        }
         if (Network.isServer) {
-            if (true) {
-
-            }
+            Apply(other.gameObject);
+            Destroy();
         }
     }
     #endregion
