@@ -154,7 +154,7 @@ class FPSController : MonoBehaviour
             Camera.main.enabled = false;    // Disable the main camera
             Transform fpsCam = (Transform)Instantiate(cameraPrefab);
             fpsCam.parent = this.transform;
-            fpsCam.localPosition = new Vector3(0f, 0.025f, 0.26f);
+            fpsCam.localPosition = new Vector3(0f, 0.4f, 0.26f);
             fpsCam.GetComponent<FPSCamera>().MouseYSensitivity = this.mouseSensitivity.y;
         }
     }

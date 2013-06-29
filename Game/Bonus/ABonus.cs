@@ -19,6 +19,8 @@ public class ABonus : MonoBehaviour {
             if (respawnTimer <= 0f) {
                 Spawn();
             }
+        } else {
+            this.transform.RotateAround(Vector3.up, 0.05f);
         }
 	}
 
