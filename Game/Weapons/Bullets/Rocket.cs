@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Rocket : Bullet
 {
@@ -8,7 +9,7 @@ public class Rocket : Bullet
     #endregion
 
     #region Private Members
-    private Transform detonator; 
+    //private List<Transform> detonators = new List<Transform>();
     #endregion
 
     #region Update
@@ -20,15 +21,17 @@ public class Rocket : Bullet
     #endregion
 
     #region Methods
-    public override void Kill() {
-        base.Kill();
-        detonator = (Transform)Network.Instantiate(detonatorPrefab, this.transform.position, Quaternion.identity, 0);
-        //networkView.RPC("Explode", RPCMode.All);
+    void Explode(GameObject touchedTarget) {
+        Transform detonator = (Transform)Network.Instantiate(detonatorPrefab, this.transform.position, Quaternion.identity, 0);
+        detonator.gameObject.GetComponent<SphereExplosion>().TouchedTarget = touchedTarget;   // We pass to the explosion instance the GameObject that the bullet touched, so that it doesn't get affected by the explosion
+        detonator.gameObject.GetComponent<SphereExplosion>().Bullet = this;
     }
 
-    [RPC]
-    void Explode() {
-        detonator = (Transform)Instantiate(detonatorPrefab, this.transform.position, Quaternion.identity);
+    protected override void OnTriggerEnter(Collider other) {
+        base.OnTriggerEnter(other);
+        if (Network.isServer) {
+            Explode(other.gameObject);
+        }
     }
     #endregion
 }

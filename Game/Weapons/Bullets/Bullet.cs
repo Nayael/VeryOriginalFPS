@@ -57,7 +57,7 @@ abstract public class Bullet : MonoBehaviour
 		Fire(owner, position);
 	}
 
-    protected void Apply(GameObject target) {
+    public void Apply(GameObject target) {
         if (target.GetComponent<Unit>() == null) {
             return;
         }
@@ -134,13 +134,13 @@ abstract public class Bullet : MonoBehaviour
     #endregion
 
     #region Events
-    protected void OnTriggerEnter(Collider other) {
-        if (other.gameObject.GetComponent<Unit>() == null) {
-            return;
-        }
+    protected virtual void OnTriggerEnter(Collider other) {
         if (Network.isServer) {
-            Apply(other.gameObject);
-            Kill();
+            // If the bullet has touched a Unit, we apply the effect of the bullet
+            if (other.gameObject.GetComponent<Unit>() != null) {
+                Apply(other.gameObject);
+            }
+            Kill(); // The bullet gets detroyed once it's touched
         }
     }
     #endregion
