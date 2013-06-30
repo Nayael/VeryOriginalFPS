@@ -121,7 +121,7 @@ abstract public class Bullet : MonoBehaviour
             _shooter = shooter;
             transform.position = position;
             transform.LookAt(_direction);
-            networkView.RPC("ValidateBulletShoot", _shooter);    // We tell the shooter that the server is taking care of the bullet's movement
+            networkView.RPC("ValidateBulletShoot", _shooter);    // We tell the shooterComponent that the server is taking care of the bullet's movement
         
         // If we are a client, then we just make the bullet visible
         } else {

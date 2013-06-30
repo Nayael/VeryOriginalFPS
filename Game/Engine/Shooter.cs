@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 /// <summary>
 /// A Component for any GameObject that can shoot
@@ -24,6 +25,10 @@ public class Shooter : MonoBehaviour
     #region Properties
     public AWeapon Weapon {
         get { return _weapon; }
+    }
+
+    public List<AWeapon> Weapons {
+        get { return _weapons; }
     }
     #endregion
 
@@ -116,6 +121,15 @@ public class Shooter : MonoBehaviour
                 _weapon.transform.rotation = weaponRot;
             }
         }
+    }
+
+    public AWeapon GetWeaponOfType(Type weaponType) {
+        foreach (AWeapon possessedWeapon in _weapons) {
+            if (possessedWeapon.GetType() == weaponType) {
+                return possessedWeapon;
+            }
+        }
+        return null;
     }
     #endregion
 

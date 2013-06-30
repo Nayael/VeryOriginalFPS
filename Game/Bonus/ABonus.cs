@@ -12,6 +12,12 @@ public class ABonus : MonoBehaviour {
     private bool visible = true;
     #endregion
 
+    #region Initialization
+    void Start() {
+        respawnTimer = respawnTime;
+    } 
+    #endregion
+
     #region Methods
     void Update() {
         if (!this.visible) {

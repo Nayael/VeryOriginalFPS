@@ -48,6 +48,10 @@ public class GUIManager : MonoBehaviour
 
     void MenuGUI() {
         GUILayout.BeginVertical(skin.GetStyle("mainMenu"), GUILayout.Height(Screen.height), GUILayout.Width(Screen.width));
+        if (GUILayout.Button("Instructions")) {
+            guiRenderer = InstructionsGUI;
+            return;
+        }
         GUILayout.FlexibleSpace();
 
         // Main Title
@@ -57,10 +61,7 @@ public class GUIManager : MonoBehaviour
 
         GUILayout.BeginVertical();
         GUILayout.FlexibleSpace();  // Center Vertically
-
         GUILayout.Label("Very Original FPS", skin.GetStyle("mainTitle"));
-
-        //GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
@@ -141,6 +142,79 @@ public class GUIManager : MonoBehaviour
         GUILayout.EndVertical();
     }
 
+    void InstructionsGUI() {
+        GUILayout.BeginArea(new Rect(0f, 0f, Screen.width, Screen.height));
+        GUILayout.BeginVertical(skin.GetStyle("mainMenu"), GUILayout.Height(Screen.height), GUILayout.Width(Screen.width));
+        if (GUILayout.Button("Back")) {
+            guiRenderer = MenuGUI;
+            return;
+        }
+
+        GUIStyle specialText = new GUIStyle(skin.GetStyle("InstructionsText"));
+        specialText.normal.textColor = new Color(0.15f, 0.15f, 0.15f);
+
+        GUILayout.FlexibleSpace();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Move your character with", skin.GetStyle("InstructionsText"));
+        GUILayout.Label(" W A S D", specialText);
+        GUILayout.Label(" keys", skin.GetStyle("InstructionsText"));
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Jump with the", skin.GetStyle("InstructionsText"));
+        GUILayout.Label(" spacebar", specialText);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Shoot with", skin.GetStyle("InstructionsText"));
+        GUILayout.Label(" Left click", specialText);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Change weapon with the", skin.GetStyle("InstructionsText"));
+        GUILayout.Label(" mouse wheel", specialText);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Items :", skin.GetStyle("InstructionsText"));
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Box(textures["Medkit"], GUILayout.Width(48f), GUILayout.Height(35f));
+        GUILayout.Label(" : Health", skin.GetStyle("InstructionsText"));
+        GUILayout.FlexibleSpace();
+        GUILayout.FlexibleSpace();
+        GUILayout.Box(textures["GunAmmo"], GUILayout.Width(48f), GUILayout.Height(35f));
+        GUILayout.Label(" : Gun Ammo", skin.GetStyle("InstructionsText"));
+        GUILayout.FlexibleSpace();
+        GUILayout.FlexibleSpace();
+        GUILayout.Box(textures["RLAmmo"], GUILayout.Width(48f), GUILayout.Height(35f));
+        GUILayout.Label(" : Rocket Launcher Ammo", skin.GetStyle("InstructionsText"));
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        GUILayout.EndVertical();
+        GUILayout.EndArea();
+    }
+
     void GameGUI() {
         if (!Network.isClient) {
             return;
@@ -201,7 +275,12 @@ public class GUIManager : MonoBehaviour
 
                 GUILayout.BeginArea(new Rect(Screen.width - 120f, Screen.height - 60f, 110f, 60f));
                 GUILayout.BeginHorizontal();
+
+                GUILayout.BeginVertical();
+                GUILayout.FlexibleSpace();
                 GUILayout.Box(ammoTexture, GUILayout.Width(44f), GUILayout.Height(44f));
+                GUILayout.EndVertical();
+
                 GUILayout.FlexibleSpace();
                 GUILayout.BeginVertical();
                 GUILayout.Space(11f);
