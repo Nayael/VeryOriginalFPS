@@ -50,7 +50,7 @@ public class DetonatorForce : DetonatorComponent {
 		}
 		if (_explodeDelay <= 0) //if the delayTime is zero
 		{
-			//tweak the position such that the explosion center is related to the explosion's direction
+			//tweak the localPosition such that the explosion center is related to the explosion's direction
 			_explosionPosition = transform.position; //- Vector3.Normalize(MyDetonator().direction);
 			_colliders = Physics.OverlapSphere (_explosionPosition, radius);
 			
@@ -65,7 +65,7 @@ public class DetonatorForce : DetonatorComponent {
 				{
 					//align the force along the object's rotation
 					//this is wrong - need to attenuate the velocity according to distance from the explosion center			
-					//offsetting the explosion force position by the negative of the explosion's direction may help
+					//offsetting the explosion force localPosition by the negative of the explosion's direction may help
 					hit.rigidbody.AddExplosionForce((power * size), _explosionPosition, (radius * size), (4f * MyDetonator().upwardsBias * size));
 					
 					SendMessage("OnDetonatorForceHit", null, SendMessageOptions.DontRequireReceiver);

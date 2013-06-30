@@ -170,8 +170,4 @@ class FPSController : MonoBehaviour
         }
     }
     #endregion
-
-    void OnCollisionEnter(Collision collision) {
-        Debug.Log("OnCollisionEnter");
-    }
 }

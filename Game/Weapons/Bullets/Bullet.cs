@@ -12,11 +12,14 @@ abstract public class Bullet : MonoBehaviour
     #endregion
 
     #region Protected Members
-	protected Vector3 _direction;   // The bullet's _direction can be defined
+	protected Vector3 _direction;   // The bullet's direction
     protected NetworkPlayer _shooter;
     #endregion
 
     #region Initialization
+    /// <summary>
+    /// Initializes the bullet (use after the bullet was extracted from the pool)
+    /// </summary>
     public void Init() {
         Deactivate();
         _direction = Vector3.zero;
@@ -43,6 +46,11 @@ abstract public class Bullet : MonoBehaviour
     #endregion
 
     #region Methods
+    /// <summary>
+    /// Fires the bullet
+    /// </summary>
+    /// <param name="owner">The bullet's owner</param>
+    /// <param name="localPosition">The bullet's starting localPosition</param>
     public void Fire(Unit owner, Vector3 position) {
         transform.parent = null;
         transform.position = position;
@@ -52,11 +60,21 @@ abstract public class Bullet : MonoBehaviour
         networkView.RPC("FireRemote", RPCMode.OthersBuffered, Network.player, position, _direction);
 	}
 
+    /// <summary>
+    /// Fires the bullet
+    /// </summary>
+    /// <param name="owner">The bullet's owner</param>
+    /// <param name="localPosition">The bullet's starting localPosition</param>
+    /// <param name="direction">The direction where the bullet will go</param>
 	public virtual void Fire(Unit owner, Vector3 position, Vector3 direction) {
 		_direction = direction;
 		Fire(owner, position);
 	}
 
+    /// <summary>
+    /// Applies the effect of the bullet
+    /// </summary>
+    /// <param name="target">The target that was touched by the bullet</param>
     public void Apply(GameObject target) {
         if (target.GetComponent<Unit>() == null) {
             return;
@@ -83,16 +101,15 @@ abstract public class Bullet : MonoBehaviour
         GetComponent<CapsuleCollider>().enabled = false;
     }
 
+    /// <summary>
+    /// Deactivates the bullet and puts it back into the pool
+    /// </summary>
 	public virtual void Kill() {
 		Deactivate();
         _direction = Vector3.zero;
         BulletsManager.Instance.PutBullet(this);	// We put it back in the pool
         networkView.RPC("PutInPool", RPCMode.OthersBuffered);
 	}
-
-    protected void GameOver() {
-        Kill();
-    }
 
     #region RPC
     [RPC]
@@ -134,6 +151,10 @@ abstract public class Bullet : MonoBehaviour
     #endregion
 
     #region Events
+    /// <summary>
+    /// Triggered when the bullet is collided
+    /// </summary>
+    /// <param name="other">The collider of the colliding object</param>
     protected virtual void OnTriggerEnter(Collider other) {
         if (Network.isServer) {
             // If the bullet has touched a Unit, we apply the effect of the bullet

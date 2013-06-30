@@ -78,10 +78,13 @@ public class Shooter : MonoBehaviour
 
         _weapon.transform.localPosition = _weapon.positionInCamera;
         Vector3 weaponPosition = _weapon.transform.TransformPoint(Vector3.zero);
-        Debug.Log(_weapon.GetType().ToString() + " weaponPosition " + _weapon.transform.localPosition + weaponPosition);
-        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), weaponPosition);
+        Vector3 weaponPositionInPlayerSpace = this.transform.InverseTransformPoint(weaponPosition); // We retrieve the position of the weapon in the player's local space
+        networkView.RPC("EquipWeaponRemote", RPCMode.OthersBuffered, _weapon.GetType().ToString(), weaponPositionInPlayerSpace);
     }
 
+    /// <summary>
+    /// Switch to the next weapon
+    /// </summary>
     void NextWeapon() {
         _currentWeapon++;
         if (_currentWeapon >= _weapons.Count) {
@@ -90,6 +93,9 @@ public class Shooter : MonoBehaviour
         EquipWeapon(_currentWeapon);
     }
 
+    /// <summary>
+    /// Switch to the previous weapon
+    /// </summary>
     void PreviousWeapon() {
         _currentWeapon--;
         if (_currentWeapon < 0) {
@@ -123,7 +129,7 @@ public class Shooter : MonoBehaviour
     /// <summary>
     /// Called when another client has equiped a weapon
     /// </summary>
-    void EquipWeaponRemote(string weaponType, Vector3 position) {
+    void EquipWeaponRemote(string weaponType, Vector3 localPosition) {
         // If there was a previous weapon, put it back in the pool
         if (_weapon != null) {
             WeaponManager.Instance.PutWeaponBack(_weapon);
@@ -135,9 +141,8 @@ public class Shooter : MonoBehaviour
         _weapon.gameObject.SetActiveRecursively(true);
         _weapon.enabled = true;
         _weapon.owner = this.GetComponent<Unit>();
-        _weapon.transform.position = position;
-        _weapon.transform.parent = _weapon.owner.transform;
-        Debug.Log("EquipWeaponRemote " + _weapon.transform.localPosition);
+        _weapon.transform.parent = _weapon.owner.transform;   // Mettre en parent une fois que le mec a bien été replacé
+        _weapon.transform.localPosition = localPosition;
     }
 
     [RPC]

@@ -55,6 +55,7 @@ public sealed class WeaponManager
         }
         weapon = pool[type].Dequeue();
         weapon.Init();
+        weapon.transform.parent = null;
         return weapon;
 	}
 

@@ -132,9 +132,9 @@ public class DetonatorBurstEmitter : DetonatorComponent
 
 	
 	private float _tmpParticleSize; //calculated particle size... particleSize * randomized size (by sizeVariation)
-	private Vector3 _tmpPos; //calculated position... randomized inside sphere of incoming radius * size
+	private Vector3 _tmpPos; //calculated localPosition... randomized inside sphere of incoming radius * size
 	private Vector3 _tmpDir; //calculated velocity - randomized inside sphere - incoming velocity * size
-	private Vector3 _thisPos; //handle on this gameobject's position, set inside
+	private Vector3 _thisPos; //handle on this gameobject's localPosition, set inside
 	private float _tmpDuration; //calculated duration... incoming duration * incoming timescale
 	private float _tmpCount; //calculated count... incoming count * incoming detail
 	private float _scaledDuration; //calculated duration... duration * timescale
