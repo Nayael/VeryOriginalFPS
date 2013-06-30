@@ -36,7 +36,7 @@ abstract public class Bullet : MonoBehaviour
         if (Network.isServer) {
             health.Current--;		    // The bullet degrades itself
             if (health.Current <= 0) {	// Once its lifetime is over
-                Destroy();		    // We destroy the bullet
+                Kill();		    // We destroy the bullet
             }
         }
 	}
@@ -83,7 +83,7 @@ abstract public class Bullet : MonoBehaviour
         GetComponent<CapsuleCollider>().enabled = false;
     }
 
-	public void Destroy() {
+	public virtual void Kill() {
 		Deactivate();
         _direction = Vector3.zero;
         BulletsManager.Instance.PutBullet(this);	// We put it back in the pool
@@ -91,7 +91,7 @@ abstract public class Bullet : MonoBehaviour
 	}
 
     protected void GameOver() {
-        Destroy();
+        Kill();
     }
 
     #region RPC
@@ -140,7 +140,7 @@ abstract public class Bullet : MonoBehaviour
         }
         if (Network.isServer) {
             Apply(other.gameObject);
-            Destroy();
+            Kill();
         }
     }
     #endregion

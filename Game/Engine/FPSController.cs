@@ -151,8 +151,11 @@ class FPSController : MonoBehaviour
             }
 
             // Use a FPSCamera
-            Camera.main.enabled = false;    // Deactivate the main camera
+            Camera mainCamera = Camera.main;
+            Camera.main.tag = null;
+            mainCamera.enabled = false;    // Deactivate the main camera
             Transform fpsCam = (Transform)Instantiate(cameraPrefab);
+            fpsCam.GetComponent<FPSCamera>().tag = "MainCamera";
             fpsCam.parent = this.transform;
             fpsCam.localPosition = new Vector3(0f, 0.4f, 0.26f);
             fpsCam.GetComponent<FPSCamera>().MouseYSensitivity = this.mouseSensitivity.y;
